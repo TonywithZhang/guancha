@@ -3,6 +3,8 @@ package com.tec.zhang.guancha;
 import android.annotation.SuppressLint;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
+
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.Handler;
@@ -181,7 +183,7 @@ public class WelcomeActivity extends AppCompatActivity {
 
             @Override
             public void onFinish() {
-
+                startActivity(new Intent(WelcomeActivity.this,SurfPage.class));
                 //Toast.makeText(WelcomeActivity.this,"动画加载完毕！！！",Toast.LENGTH_LONG).show();
             }
         }.start();
