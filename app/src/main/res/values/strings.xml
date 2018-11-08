@@ -6,4 +6,7 @@
     <string name="guancha">观察者网</string>
     <string name="dotone">.</string>
     <string name="care">全球视野\n中国关怀</string>
+    <string name="news_pic">新闻图片</string>
+    <string name="comment_number">评论数</string>
+    <string name="channel">观察频道</string>
 </resources>
