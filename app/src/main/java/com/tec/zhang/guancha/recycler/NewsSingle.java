@@ -6,6 +6,13 @@ public class NewsSingle {
     private String commentNum;
     private String beLong;
 
+    public NewsSingle(String imageURL, String newsTitle, String commentNum, String beLong) {
+        this.imageURL = imageURL;
+        this.newsTitle = newsTitle;
+        this.commentNum = commentNum;
+        this.beLong = beLong;
+    }
+
     public String getImageURL() {
         return imageURL;
     }

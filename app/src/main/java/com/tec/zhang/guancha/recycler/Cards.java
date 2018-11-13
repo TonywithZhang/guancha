@@ -1,5 +1,6 @@
 package com.tec.zhang.guancha.recycler;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -9,25 +10,32 @@ import android.widget.TextView;
 import com.squareup.picasso.Picasso;
 import com.tec.zhang.guancha.R;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import static android.content.ContentValues.TAG;
+
 public class Cards extends RecyclerView.Adapter<Cards.MyViewHolder> {
-    private List<NewsSingle> news;
+    public List<ParseHTML.GuanChaSouceData> news;
 
     @Override
     public void onBindViewHolder(@NonNull MyViewHolder holder, int position) {
-        NewsSingle single = news.get(position);
-        Picasso.get().load(single.getImageURL()).into(holder.newsPic);
-        holder.newsTitle.setText(single.getNewsTitle());
-        holder.reads.setText(single.getCommentNum());
-        holder.beLong.setText(single.getBeLong());
+        ParseHTML.GuanChaSouceData single = news.get(position);
+        if (!single.getImageUrl().equals("")) {
+            Picasso.get().load(single.getImageUrl()).placeholder(R.drawable.ic_guancha).fit().into(holder.newsPic);
+        } else {
+            holder.newsPic.setImageResource(R.drawable.ic_guancha);
+        }
+        holder.newsTitle.setText(single.getTitle());
+        holder.reads.setText(String.valueOf(single.getCommentNum()));
+        holder.beLong.setText(single.getBelongTo());
     }
-
-    public Cards(List<NewsSingle> news){
-        news = news;
+    public Cards(List<ParseHTML.GuanChaSouceData> newsData){
+        news = new ArrayList<>();
+        news = newsData;
     }
 
     @NonNull
@@ -40,7 +48,7 @@ public class Cards extends RecyclerView.Adapter<Cards.MyViewHolder> {
 
     @Override
     public int getItemCount() {
-        return 0;
+        return news.size();
     }
 
     public static class MyViewHolder extends RecyclerView.ViewHolder{
