@@ -1,5 +1,8 @@
 package com.tec.zhang.guancha.recycler;
 
+import android.os.Parcel;
+import android.os.Parcelable;
+
 public class NewsSingle {
     private String imageURL;
     private String newsTitle;
@@ -44,4 +47,5 @@ public class NewsSingle {
     public void setBeLong(String beLong) {
         this.beLong = beLong;
     }
+
 }

@@ -18,6 +18,7 @@
             <androidx.appcompat.widget.Toolbar
                 android:id="@+id/toolbar"
                 android:fitsSystemWindows="true"
+                android:layout_marginTop="15dp"
                 android:background="?attr/colorPrimary"
                 android:layout_width="match_parent"
                 app:layout_collapseMode="parallax"
@@ -35,18 +36,17 @@
                     android:gravity="center"
                     />
             </androidx.appcompat.widget.Toolbar>
-            <com.google.android.material.tabs.TabLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                app:tabMode="scrollable"
-                app:tabSelectedTextColor="#ff0000"
-                app:tabTextAppearance="@style/AppTheme"
-                app:tabIndicatorColor="#ff0000"
-                app:tabIndicatorHeight="4dp"
-                app:tabIndicatorGravity="center"
-                android:id="@+id/tablayout"
-                />
         </com.google.android.material.appbar.CollapsingToolbarLayout>
+        <com.google.android.material.tabs.TabLayout
+            android:layout_width="match_parent"
+            android:layout_height="25dp"
+            app:tabMode="scrollable"
+            app:tabIndicatorColor="#ff0000"
+            android:background="?attr/colorPrimary"
+            app:tabIndicatorGravity="bottom"
+            android:scrollbarSize="15dp"
+            android:id="@+id/tablayout"
+            />
     </com.google.android.material.appbar.AppBarLayout>
     <androidx.viewpager.widget.ViewPager
         android:layout_width="match_parent"

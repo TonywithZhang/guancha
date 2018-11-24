@@ -1,6 +1,7 @@
 package com.tec.zhang.guancha.pages;
 
 import android.os.Parcelable;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -13,6 +14,7 @@ import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentPagerAdapter;
 
 public class FragmentIndicator extends FragmentPagerAdapter {
+    private static final String TAG = "在pager控制器中";
     private List<Fragment> fragments;
     private List<String> names;
 
@@ -85,6 +87,8 @@ public class FragmentIndicator extends FragmentPagerAdapter {
     @Nullable
     @Override
     public CharSequence getPageTitle(int position) {
-        return names.get(position % names.size());
+        //Log.d(TAG, "getPageTitle: " + names.get(position));
+        return names.get(position);
+
     }
 }
