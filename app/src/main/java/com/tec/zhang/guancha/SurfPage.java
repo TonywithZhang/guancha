@@ -51,10 +51,20 @@ public class SurfPage extends AppCompatActivity {
     };
     private List<String> fragmentNames;
     private List<Fragment> fragments;
-    //private WebView webView;
-    //private RecyclerView rececle;
+
     private ParseHTML guanchaWeb;
     private boolean parseFinishFlage = false;
+
+    private MainPage mainPage;
+    private FengWenPage fengWenPage;
+    private InternationalPage internationalPage;
+    private MilitaryPage militaryPage;
+    private FinancialPage financialPage;
+    private ProductionPage productionPage;
+    private TecnologyPage tecnologyPage;
+    private AutoPage autoPage;
+    private LeadingAheadPage leadingAheadPage;
+    private VideoPage videoPage;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -86,38 +96,80 @@ public class SurfPage extends AppCompatActivity {
                 parseFinishFlage = true;
             }
         }).start();
-        try {
+
+        mainPage = new MainPage();
+        fengWenPage = new FengWenPage();
+        internationalPage = new InternationalPage();
+        militaryPage = new MilitaryPage();
+        financialPage = new FinancialPage();
+        productionPage = new ProductionPage();
+        tecnologyPage = new TecnologyPage();
+        autoPage = new AutoPage();
+        leadingAheadPage = new LeadingAheadPage();
+        videoPage = new VideoPage();
+        /*try {
             while (!parseFinishFlage) Thread.sleep(100);
         } catch (InterruptedException e) {
             e.printStackTrace();
-        }
+        }*/
         fragmentNames = new ArrayList<>(16);
         for (String MODULE : MODULES) {
             tabLayout.addTab(tabLayout.newTab().setText(MODULE));
-            //Log.d(TAG, "onCreate: "  + MODULE);
             fragmentNames.add(MODULE);
         }
         fragments = new ArrayList<>(16);
-        fragments.add(MainPage.newInstance(guanchaWeb.getImportantNews()));
-        fragments.add(FengWenPage.newInstance(guanchaWeb.getFengwenList()));
-        fragments.add(InternationalPage.newInstance(guanchaWeb.getInternationalNews()));
-        fragments.add(MilitaryPage.newInstance(guanchaWeb.getMilitaryNews()));
-        fragments.add(FinancialPage.newInstance(guanchaWeb.getFinancialNews()));
-        fragments.add(ProductionPage.newInstance(guanchaWeb.getProductionNews()));
-        fragments.add(TecnologyPage.newInstance(guanchaWeb.getTecnologyNews()));
-        fragments.add(AutoPage.newInstance(guanchaWeb.getAutoNews()));
-        fragments.add(LeadingAheadPage.newInstance(guanchaWeb.getLeadAheadNews()));
-        fragments.add(VideoPage.newInstance(guanchaWeb.getVideoNews()));
+        fragments.add(mainPage);
+        fragments.add(fengWenPage);
+        fragments.add(internationalPage);
+        fragments.add(militaryPage);
+        fragments.add(financialPage);
+        fragments.add(productionPage);
+        fragments.add(tecnologyPage);
+        fragments.add(autoPage);
+        fragments.add(leadingAheadPage);
+        fragments.add(videoPage);
 
-        /*for (String s : fragmentNames){
-            Log.d(TAG, "onCreate: " + s);
-        }*/
         FragmentIndicator fragmentAdapter = new FragmentIndicator(getSupportFragmentManager(),fragments,fragmentNames);
         pager.setAdapter(fragmentAdapter);
         tabLayout.setupWithViewPager(pager);
-        /*for (int i = 0; i < fragmentNames.size() ; i ++){
-            Log.d(TAG, "onCreate: " + Objects.requireNonNull(tabLayout.getTabAt(i)).getText());
-        }*/
-
+        new Thread(displayItems).start();
     }
+    Runnable displayItems = new Runnable() {
+        @Override
+        public void run() {
+            while (!parseFinishFlage) {
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+            Log.d(TAG, "run: 首页视图里面，更新视图方法被调用");
+            mainPage.setNewsSingles(guanchaWeb.getImportantNews());
+            fengWenPage.setNewsList(guanchaWeb.getFengwenList());
+            internationalPage.setNewsList(guanchaWeb.getInternationalNews());
+            militaryPage.setNewsList(guanchaWeb.getMilitaryNews());
+            financialPage.setNewsList(guanchaWeb.getFinancialNews());
+            productionPage.setNewsList(guanchaWeb.getProductionNews());
+            tecnologyPage.setNewsList(guanchaWeb.getTecnologyNews());
+            autoPage.setNewsList(guanchaWeb.getAutoNews());
+            leadingAheadPage.setNewsList(guanchaWeb.getLeadAheadNews());
+            videoPage.setNewsList(guanchaWeb.getVideoNews());
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    mainPage.updateView();
+                    fengWenPage.updateView();
+                    /*internationalPage.updateView();
+                    militaryPage.updateView();
+                    financialPage.updateView();
+                    productionPage.updateView();
+                    tecnologyPage.updateView();
+                    autoPage.updateView();
+                    leadingAheadPage.updateView();
+                    videoPage.updateView();*/
+                }
+            });
+        }
+    };
 }
