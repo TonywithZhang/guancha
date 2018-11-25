@@ -2,6 +2,7 @@ package com.tec.zhang.guancha.pages;
 
 import android.annotation.SuppressLint;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -21,12 +22,15 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import static androidx.constraintlayout.widget.Constraints.TAG;
+
 public class MainPage extends Fragment {
     //private boolean finished = false;
     //private ParseHTML parseHTML;
-
-    private void setNewsSingles(List<ParseHTML.GuanChaSouceData> newsSingles) {
-        this.newsSingles = newsSingles;
+    Cards cards;
+    public void setNewsSingles(List<ParseHTML.GuanChaSouceData> newsSingles) {
+        this.newsSingles.clear();
+        this.newsSingles.addAll(newsSingles);
     }
 
     private List<ParseHTML.GuanChaSouceData> newsSingles = new ArrayList<>();
@@ -64,7 +68,7 @@ public class MainPage extends Fragment {
                 e.printStackTrace();
             }
         }*/
-        Cards cards = new Cards(newsSingles);
+        cards = new Cards(newsSingles,getActivity());
         recyclerView.addItemDecoration(new MyItemDecration(10));
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         recyclerView.setAdapter(cards);
@@ -85,5 +89,8 @@ public class MainPage extends Fragment {
         //finished = false;
         return view;
     }
-
+    public void updateView(){
+        Log.d(TAG, "updateView: 更新视图方法被执行，新闻列表里面的新闻数量为" + newsSingles.size());
+        cards.notifyDataSetChanged();
+    }
 }

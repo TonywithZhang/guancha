@@ -23,17 +23,18 @@ import androidx.recyclerview.widget.RecyclerView;
 public class InternationalPage extends Fragment {
     private static final String TAG = "国际新闻里面";
     public void setNewsList(ArrayList<ParseHTML.GuanChaSouceData> newsList) {
-        this.newsList = newsList;
+        this.newsList.clear();
+        this.newsList.addAll(newsList);
     }
-
-    private ArrayList<ParseHTML.GuanChaSouceData> newsList;
+    Cards cards;
+    private ArrayList<ParseHTML.GuanChaSouceData> newsList = new ArrayList<>();
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View internationalView= inflater.inflate(R.layout.partial_page,container,false);
         RecyclerView recyclerView = internationalView.findViewById(R.id.recycler);
-        Cards cards = new Cards(newsList);
+        cards = new Cards(newsList,getActivity());
         Log.d(TAG, "onCreateView: " + newsList.size());
         recyclerView.addItemDecoration(new MyItemDecration(10));
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
@@ -47,5 +48,8 @@ public class InternationalPage extends Fragment {
         fragment.setArguments(args);
         fragment.setNewsList(news);
         return fragment;
+    }
+    public void updateView(){
+        cards.notifyDataSetChanged();
     }
 }

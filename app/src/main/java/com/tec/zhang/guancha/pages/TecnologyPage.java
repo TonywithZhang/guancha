@@ -11,6 +11,7 @@ import com.tec.zhang.guancha.recycler.MyItemDecration;
 import com.tec.zhang.guancha.recycler.ParseHTML;
 
 import java.util.ArrayList;
+import java.util.concurrent.CancellationException;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -22,15 +23,16 @@ public class TecnologyPage extends Fragment {
     private ArrayList<ParseHTML.GuanChaSouceData> newsList = new ArrayList<>();
 
     public void setNewsList(ArrayList<ParseHTML.GuanChaSouceData> newsList) {
-        this.newsList = newsList;
+        this.newsList.clear();
+        this.newsList.addAll(newsList);
     }
-
+    Cards cards;
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View tecnologyView = inflater.inflate(R.layout.partial_page,container,false);
         RecyclerView recyclerView = tecnologyView.findViewById(R.id.recycler);
-        Cards cards = new Cards(newsList);
+        cards = new Cards(newsList,getActivity());
         recyclerView.addItemDecoration(new MyItemDecration(10));
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         recyclerView.setAdapter(cards);
@@ -43,5 +45,8 @@ public class TecnologyPage extends Fragment {
         fragment.setArguments(args);
         fragment.setNewsList(news);
         return fragment;
+    }
+    public void updateView(){
+        cards.notifyDataSetChanged();
     }
 }

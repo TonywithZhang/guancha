@@ -3,8 +3,11 @@ package com.tec.zhang.guancha.recycler;
 import android.os.Bundle;
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.util.Log;
 
 import java.io.IOException;
+import java.net.SocketException;
+import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,6 +15,8 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+
+import static androidx.constraintlayout.widget.Constraints.TAG;
 
 public class ParseHTML {
     private boolean transferFinish = false;
@@ -43,24 +48,15 @@ public class ParseHTML {
         Elements guanchaHead = guanchaWebPage.getElementsByTag("h3");
         Element headLine = guanchaHead.get(0).select("a").get(0);
         Element headImage = guanchaWebPage.select("img").select("[alt=" + headLine.text() + "]").get(0);
-        importantNews.add(new GuanChaSouceData(headLine.text(),"","",headImage.attr("src"),"",0,0,"",""));
-/*
-		for(Element ele : guanchaHead) {
-			Elements topOne = ele.select("a");
-			for(Element ele1 : topOne) {
-
-			}
-		}
-*/
+        importantNews.add(new GuanChaSouceData(NEWS_TYPE.FIRST_PAGE,headLine.text(),"","",headImage.attr("abs:src"),"",0,0,"",headLine.attr("abs:href")));
 
         Elements viseHead = guanchaWebPage.select(".content-headline").select(".c_hidden");
         if (viseHead.size() != 0) {
             for (Element ele : viseHead) {
                 if (!ele.text().equals("")) {
-                    importantNews.add(new GuanChaSouceData(ele.text(),"","","","",0,0,"",""));
+                    importantNews.add(new GuanChaSouceData(NEWS_TYPE.FIRST_PAGE,ele.text(),"","","","",0,0,"",ele.attr("abs:href")));
                 }
             }
-            //System.out.println(headImage.attr("src"));
         }
     }
 
@@ -103,7 +99,7 @@ public class ParseHTML {
                 belongTo = "";
             }else {belongTo = elementBelongTo.get(0).text();}
             String articleUrl = title.select("a").get(0).attr("abs:href");
-            normalNews.add(new GuanChaSouceData(newsTitle, authorName, authorIntro, imageUrl, shortArticle, readsNum, commentNum, belongTo,articleUrl));
+            normalNews.add(new GuanChaSouceData(NEWS_TYPE.FIRST_PAGE,newsTitle, authorName, authorIntro, imageUrl, shortArticle, readsNum, commentNum, belongTo,articleUrl));
         }
         //以下是第二段解析
         Elements secondSegment = guanchaWebPage.select(".img-List").select("li");
@@ -121,7 +117,7 @@ public class ParseHTML {
                 belongTo = "";
             }else {belongTo = elementBelongTo.get(0).text();}
             String articleUrl = title.select("a").get(0).attr("abs:href");
-            GuanChaSouceData sourceData = new GuanChaSouceData(newsTitle, "", "", imageUrl, "", readsNum, commentNum, belongTo,articleUrl);
+            GuanChaSouceData sourceData = new GuanChaSouceData(NEWS_TYPE.FIRST_PAGE,newsTitle, "", "", imageUrl, "", readsNum, commentNum, belongTo,articleUrl);
             normalNews.add(sourceData);
         }
         //以下为第三段解析,风闻社区为动态加载模式，暂且放弃
@@ -140,7 +136,7 @@ public class ParseHTML {
                 belongTo = "";
             }else {belongTo = elementBelongTo.get(0).text();}
             String articleUrl = title.select("a").get(0).attr("abs:href");
-            GuanChaSouceData sourceData = new GuanChaSouceData(newsTitle, "", "", imageUrl, "", readsNum, commentNum, belongTo,articleUrl);
+            GuanChaSouceData sourceData = new GuanChaSouceData(NEWS_TYPE.FIRST_PAGE,newsTitle, "", "", imageUrl, "", readsNum, commentNum, belongTo,articleUrl);
             normalNews.add(sourceData);
         }
     }
@@ -170,17 +166,19 @@ public class ParseHTML {
      *
      * */
     public static class GuanChaSouceData implements Parcelable {
+        private boolean isHeadLine = false;
+        private NEWS_TYPE newsType;
         private String articleUrl;
         private String title;
-        private String authorName = new String();
-        private String authorIntroduction = new String();
+        private String authorName;
+        private String authorIntroduction;
         private String imageUrl;
-        private String shortArticle = new String();
+        private String shortArticle;
         private int readsNum = 0;
         private int commentNum = 0;
-        private String belongTo = new String();
+        private String belongTo;
 
-        public GuanChaSouceData(String title, String authorName, String authorIntroduction, String imageUrl,
+        public GuanChaSouceData(NEWS_TYPE newsType,String title, String authorName, String authorIntroduction, String imageUrl,
                                 String shortArticle, int readsNum, int commentNum, String belongTo,String articleUrl) {
             super();
             this.title = title;
@@ -193,6 +191,15 @@ public class ParseHTML {
             this.belongTo = belongTo;
             this.articleUrl = articleUrl;
         }
+
+        public void setHeadLine(boolean headLine) {
+            isHeadLine = headLine;
+        }
+
+        public NEWS_TYPE getNewsType() {
+            return newsType;
+        }
+
         public String getBelongTo() {
             return belongTo;
         }
@@ -289,7 +296,6 @@ public class ParseHTML {
         if(eles.size() != 0) {
             for(Element ele : eles) {
                 moduleUrl.add(ele.attr("abs:href"));
-                System.out.println(ele.attr("abs:href") + ele.text());
             }
         }
     }
@@ -328,11 +334,10 @@ public class ParseHTML {
                 String commentString = ele.select(".op-tools").select(".comment").select("span").get(0).text();
                 int comment = commentString.equals("")?0 : Integer.parseInt(commentString);
                 String belongTo = ele.select(".topic_tag").get(0).text();
-                System.out.println(belongTo);
-                fengwenList.add(new GuanChaSouceData(title, authorName, authorIntroduction, imageUrl, shortArticle, reads, comment, belongTo, articleUrl));
+                fengwenList.add(new GuanChaSouceData(NEWS_TYPE.FENGWEN,title, authorName, authorIntroduction, imageUrl, shortArticle, reads, comment, belongTo, articleUrl));
             }
+            Log.d(TAG, "parseFengwen: 新闻列表总共" + fengwenList.size() + "条");
         } catch (IOException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
     }
@@ -372,7 +377,7 @@ public class ParseHTML {
                 String commentString = ele.select(".interact-comment").get(0).text();
                 int commentNum = commentString.equals("") ? 0 : Integer.parseInt(commentString);
                 String belongTo = "国际";
-                internationalNews.add(new GuanChaSouceData(title, authorName, authorIntroduction, imageUrl, shortArticle, readsNum, commentNum, belongTo, articleUrl));
+                internationalNews.add(new GuanChaSouceData(NEWS_TYPE.INTERNATIONAL,title, authorName, authorIntroduction, imageUrl, shortArticle, readsNum, commentNum, belongTo, articleUrl));
             }
             //下面是三段新闻解析，因为网页格式与首页相同，所以直接拷贝，只改变集合
             Elements firstSegment = internationalPage.select(".module-news-main").get(0).select("li");
@@ -394,7 +399,7 @@ public class ParseHTML {
                     belongTo = "";
                 }else {belongTo = elementBelongTo.get(0).text();}
                 String articleUrl = title.select("a").get(0).attr("abs:href");
-                internationalNews.add(new GuanChaSouceData(newsTitle, authorName, authorIntro, imageUrl, shortArticle, readsNum, commentNum, belongTo,articleUrl));
+                internationalNews.add(new GuanChaSouceData(NEWS_TYPE.INTERNATIONAL,newsTitle, authorName, authorIntro, imageUrl, shortArticle, readsNum, commentNum, belongTo,articleUrl));
             }
             //以下是第二段解析
             Elements secondSegment = internationalPage.select(".img-List").select("li");
@@ -412,7 +417,7 @@ public class ParseHTML {
                     belongTo = "";
                 }else {belongTo = elementBelongTo.get(0).text();}
                 String articleUrl = title.select("a").get(0).attr("abs:href");
-                GuanChaSouceData sourceData = new GuanChaSouceData(newsTitle, "", "", imageUrl, "", readsNum, commentNum, belongTo,articleUrl);
+                GuanChaSouceData sourceData = new GuanChaSouceData(NEWS_TYPE.INTERNATIONAL,newsTitle, "", "", imageUrl, "", readsNum, commentNum, belongTo,articleUrl);
                 internationalNews.add(sourceData);
             }
             //以下为第三段解析
@@ -431,7 +436,7 @@ public class ParseHTML {
                     belongTo = "";
                 }else {belongTo = elementBelongTo.get(0).text();}
                 String articleUrl = title.select("a").get(0).attr("abs:href");
-                GuanChaSouceData sourceData = new GuanChaSouceData(newsTitle, "", "", imageUrl, "", readsNum, commentNum, belongTo,articleUrl);
+                GuanChaSouceData sourceData = new GuanChaSouceData(NEWS_TYPE.INTERNATIONAL,newsTitle, "", "", imageUrl, "", readsNum, commentNum, belongTo,articleUrl);
                 internationalNews.add(sourceData);}
         } catch (IOException e) {
             // TODO Auto-generated catch block
@@ -459,112 +464,83 @@ public class ParseHTML {
             Document militaryPage = Jsoup.connect(moduleUrl.get(3)).get();
             //下面是军事头条新闻
             Elements toutiao = militaryPage.select(".new-header-list").select("li");
-            //System.out.println(toutiao.size());
             for(Element ele : toutiao) {
                 String articleUrl = ele.select("h4").select("a").get(0).attr("abs:href");
-                //System.out.println(articleUrl);
                 String title = ele.select("h4").text();
-                System.out.println(title);
                 String authorName = "";
                 String authorIntroduction = "";
                 String imageUrl = ele.select("img").attr("abs:src");
-                //System.out.println(imageUrl);
                 String shortArticle = "";
                 String readsNumString = ele.select(".interact-attention").get(0).text();
                 int readsNum = readsNumString.equals("")? 0 : Integer.parseInt(readsNumString);
-                //System.out.println(readsNum);
                 String commentString = ele.select(".interact-comment").get(0).text();
                 int commentNum = commentString.equals("") ? 0 : Integer.parseInt(commentString);
                 String belongTo = "国际";
-                militaryNews.add(new GuanChaSouceData(title, authorName, authorIntroduction, imageUrl, shortArticle, readsNum, commentNum, belongTo, articleUrl));
+                militaryNews.add(new GuanChaSouceData(NEWS_TYPE.MILITARY,title, authorName, authorIntroduction, imageUrl, shortArticle, readsNum, commentNum, belongTo, articleUrl));
             }
             //下面是三段新闻解析，因为网页格式与首页相同，所以直接拷贝，只改变集合
             Elements firstSegment = militaryPage.select(".module-news-main").get(0).select("li");
             for(Element ele : firstSegment) {
                 Elements title = ele.select("h4");
                 if(title.size() == 0) continue;
-                //System.out.println(title.get(0).text());
                 String newsTitle = title.get(0).text();
                 String authorName = ele.select(".fix").get(0).select("a").get(1).text();
-                //System.out.println(authorName);
                 String authorIntro = ele.select("span").get(0).text();
-                //System.out.println(authorIntro);
                 String imageUrl = ele.select(".module-img").size() == 0 ? "" : ele.select(".module-img").get(0).select("img").get(0).attr("abs:src");
-                //System.out.println(imageUrl);
                 String shortArticle = ele.select(".module-artile").get(0).text();
                 shortArticle = shortArticle.substring(0, shortArticle.length() - 5);
-                //System.out.println(shortArticle);
                 int readsNum = Integer.parseInt(ele.select(".interact-attention").get(0).text());
-                //System.out.println(readsNum);
                 String commentString = ele.select(".interact-comment").get(0).text();
                 int commentNum = (commentString.equals(""))? 0 :Integer.parseInt(commentString);
-                //System.out.println(commentNum);
                 Elements elementBelongTo = ele.select(".interact-key");
                 String belongTo = null;
                 if(elementBelongTo.size() == 0) {
                     belongTo = "";
                 }else {belongTo = elementBelongTo.get(0).text();}
-                //System.out.println(belongTo);
                 String articleUrl = title.select("a").get(0).attr("abs:href");
-                militaryNews.add(new GuanChaSouceData(newsTitle, authorName, authorIntro, imageUrl, shortArticle, readsNum, commentNum, belongTo,articleUrl));
+                militaryNews.add(new GuanChaSouceData(NEWS_TYPE.MILITARY,newsTitle, authorName, authorIntro, imageUrl, shortArticle, readsNum, commentNum, belongTo,articleUrl));
             }
             //以下是第二段解析
             Elements secondSegment = militaryPage.select(".img-List").select("li");
-            //System.out.println(secondSegment.size());
             for(Element ele : secondSegment) {
                 Elements title = ele.select("h4");
                 if(title.size() == 0) continue;
-                //System.out.println(title.get(0).text());
                 String newsTitle = title.get(0).text();
                 String imageUrl = ele.select(".fastRead-img").size() == 0 ? "" : ele.select(".fastRead-img").get(0).select("img").get(0).attr("abs:src");
-                //System.out.println(imageUrl);
                 int readsNum = Integer.parseInt(ele.select(".interact-attention").get(0).text());
-                //System.out.println(readsNum);
                 String commentString = ele.select(".interact-comment").get(0).text();
                 int commentNum = (commentString.equals(""))? 0 :Integer.parseInt(commentString);
-                //System.out.println(commentNum);
                 Elements elementBelongTo = ele.select(".interact-key");
                 String belongTo = null;
                 if(elementBelongTo.size() == 0) {
                     belongTo = "";
                 }else {belongTo = elementBelongTo.get(0).text();}
-                //System.out.println(belongTo);
                 String articleUrl = title.select("a").get(0).attr("abs:href");
-                GuanChaSouceData sourceData = new GuanChaSouceData(newsTitle, "", "", imageUrl, "", readsNum, commentNum, belongTo,articleUrl);
-                //System.out.println(sourceData);
+                GuanChaSouceData sourceData = new GuanChaSouceData(NEWS_TYPE.MILITARY,newsTitle, "", "", imageUrl, "", readsNum, commentNum, belongTo,articleUrl);
                 militaryNews.add(sourceData);
             }
             //以下为第三段解析,风闻社区为动态加载模式，暂且放弃
             Elements lastSegment = militaryPage.select(".img-List").select("li");
-            //System.out.println(lastSegment.childNodeSize());
             for(Element ele : lastSegment) {
                 Elements title = ele.select("h4");
                 if(title.size() == 0) continue;
-                //System.out.println(title.get(0).text());
                 String newsTitle = title.get(0).select("a").get(0).text();
                 String imageUrl = ele.select(".fastRead-img").get(0).select("img").get(0).attr("abs:src");
-                //System.out.println(imageUrl);
                 int readsNum = Integer.parseInt(ele.select(".interact-attention").get(0).text());
-                //System.out.println(readsNum);
                 String commentString = ele.select(".interact-comment").get(0).text();
                 int commentNum = (commentString.equals(""))? 0 :Integer.parseInt(commentString);
-                //System.out.println(commentNum);
                 Elements elementBelongTo = ele.select(".interact-key");
                 String belongTo = null;
                 if(elementBelongTo.size() == 0) {
                     belongTo = "";
                 }else {belongTo = elementBelongTo.get(0).text();}
-                //System.out.println(belongTo);
                 String articleUrl = title.select("a").get(0).attr("abs:href");
-                GuanChaSouceData sourceData = new GuanChaSouceData(newsTitle, "", "", imageUrl, "", readsNum, commentNum, belongTo,articleUrl);
-                //System.out.println(sourceData);
+                GuanChaSouceData sourceData = new GuanChaSouceData(NEWS_TYPE.MILITARY,newsTitle, "", "", imageUrl, "", readsNum, commentNum, belongTo,articleUrl);
                 militaryNews.add(sourceData);
             }
         } catch (IOException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
-        System.out.println(militaryNews.size());
     }
 
     public ArrayList<GuanChaSouceData> getFinancialNews() {
@@ -585,108 +561,78 @@ public class ParseHTML {
             Document financialPage = Jsoup.connect(moduleUrl.get(4)).get();
             //头条解析
             String articleUrlT = financialPage.select("h3").select("a").get(0).attr("abs:href");
-            //System.out.println(articleUrl);
             String titleT = financialPage.select("h3").select("a").get(0).text();
-            //System.out.println(title);
             String imageUrlT = financialPage.select(".content-headline").select("img").get(0).attr("abs:src");
-            //System.out.println(imageUrl);
             String readsNumString = financialPage.select(".content-headline-other").select(".interact-attention").get(0).text();
             int readsNumT = readsNumString.equals("") ? 0 :Integer.parseInt(readsNumString);
-            //System.out.println(readsNum);
             String commentNumString = financialPage.select(".content-headline-other").select(".interact-comment").get(0).text();
             int commentNumT = commentNumString.equals("") ? 0 :Integer.parseInt(commentNumString);
-            //System.out.println(commentNum);
             String belongToT = financialPage.select(".content-headline-other").select(".interact-key").get(0).text();
-            //System.out.println(belongTo);
-            financialNews.add(new GuanChaSouceData(titleT, "", "", imageUrlT, "", readsNumT, commentNumT, belongToT, articleUrlT));
+            financialNews.add(new GuanChaSouceData(NEWS_TYPE.FINANCIAL,titleT, "", "", imageUrlT, "", readsNumT, commentNumT, belongToT, articleUrlT));
 
             //三段，老套路，直接拷贝
             Elements firstSegment = financialPage.select(".module-news-main").get(0).select("li");
             for(Element ele : firstSegment) {
                 Elements title = ele.select("h4");
                 if(title.size() == 0) continue;
-                //System.out.println(title.get(0).text());
                 String newsTitle = title.get(0).text();
                 String authorName = ele.select(".fix").get(0).select("a").get(1).text();
-                //System.out.println(authorName);
                 String authorIntro = ele.select("span").get(0).text();
-                //System.out.println(authorIntro);
                 String imageUrl = ele.select(".module-img").size() == 0 ? "" : ele.select(".module-img").get(0).select("img").get(0).attr("abs:src");
-                //System.out.println(imageUrl);
                 String shortArticle = ele.select(".module-artile").get(0).text();
                 shortArticle = shortArticle.substring(0, shortArticle.length() - 5);
-                //System.out.println(shortArticle);
                 int readsNum = Integer.parseInt(ele.select(".interact-attention").get(0).text());
-                //System.out.println(readsNum);
                 String commentString = ele.select(".interact-comment").get(0).text();
                 int commentNum = (commentString.equals(""))? 0 :Integer.parseInt(commentString);
-                //System.out.println(commentNum);
                 Elements elementBelongTo = ele.select(".interact-key");
                 String belongTo = null;
                 if(elementBelongTo.size() == 0) {
                     belongTo = "";
                 }else {belongTo = elementBelongTo.get(0).text();}
-                //System.out.println(belongTo);
                 String articleUrl = title.select("a").get(0).attr("abs:href");
-                financialNews.add(new GuanChaSouceData(newsTitle, authorName, authorIntro, imageUrl, shortArticle, readsNum, commentNum, belongTo,articleUrl));
+                financialNews.add(new GuanChaSouceData(NEWS_TYPE.FINANCIAL,newsTitle, authorName, authorIntro, imageUrl, shortArticle, readsNum, commentNum, belongTo,articleUrl));
             }
             //以下是第二段解析
             Elements secondSegment = financialPage.select(".img-List").select("li");
-            //System.out.println(secondSegment.size());
             for(Element ele : secondSegment) {
                 Elements title = ele.select("h4");
                 if(title.size() == 0) continue;
-                //System.out.println(title.get(0).text());
                 String newsTitle = title.get(0).text();
                 String imageUrl = ele.select(".fastRead-img").size() == 0 ? "" : ele.select(".fastRead-img").get(0).select("img").get(0).attr("abs:src");
-                //System.out.println(imageUrl);
                 int readsNum = Integer.parseInt(ele.select(".interact-attention").get(0).text());
-                //System.out.println(readsNum);
                 String commentString = ele.select(".interact-comment").get(0).text();
                 int commentNum = (commentString.equals(""))? 0 :Integer.parseInt(commentString);
-                //System.out.println(commentNum);
                 Elements elementBelongTo = ele.select(".interact-key");
                 String belongTo = null;
                 if(elementBelongTo.size() == 0) {
                     belongTo = "";
                 }else {belongTo = elementBelongTo.get(0).text();}
-                //System.out.println(belongTo);
                 String articleUrl = title.select("a").get(0).attr("abs:href");
-                GuanChaSouceData sourceData = new GuanChaSouceData(newsTitle, "", "", imageUrl, "", readsNum, commentNum, belongTo,articleUrl);
-                //System.out.println(sourceData);
+                GuanChaSouceData sourceData = new GuanChaSouceData(NEWS_TYPE.FINANCIAL,newsTitle, "", "", imageUrl, "", readsNum, commentNum, belongTo,articleUrl);
                 financialNews.add(sourceData);
             }
             //以下为第三段解析,风闻社区为动态加载模式，暂且放弃
             Elements lastSegment = financialPage.select(".img-List").select("li");
-            //System.out.println(lastSegment.childNodeSize());
             for(Element ele : lastSegment) {
                 Elements title = ele.select("h4");
                 if(title.size() == 0) continue;
-                //System.out.println(title.get(0).text());
                 String newsTitle = title.get(0).select("a").get(0).text();
                 String imageUrl = ele.select(".fastRead-img").get(0).select("img").get(0).attr("abs:src");
-                //System.out.println(imageUrl);
                 int readsNum = Integer.parseInt(ele.select(".interact-attention").get(0).text());
-                //System.out.println(readsNum);
                 String commentString = ele.select(".interact-comment").get(0).text();
                 int commentNum = (commentString.equals(""))? 0 :Integer.parseInt(commentString);
-                //System.out.println(commentNum);
                 Elements elementBelongTo = ele.select(".interact-key");
                 String belongTo = null;
                 if(elementBelongTo.size() == 0) {
                     belongTo = "";
                 }else {belongTo = elementBelongTo.get(0).text();}
-                //System.out.println(belongTo);
                 String articleUrl = title.select("a").get(0).attr("abs:href");
-                GuanChaSouceData sourceData = new GuanChaSouceData(newsTitle, "", "", imageUrl, "", readsNum, commentNum, belongTo,articleUrl);
-                //System.out.println(sourceData);
+                GuanChaSouceData sourceData = new GuanChaSouceData(NEWS_TYPE.FINANCIAL,newsTitle, "", "", imageUrl, "", readsNum, commentNum, belongTo,articleUrl);
                 financialNews.add(sourceData);
             }
         } catch (IOException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
-        System.out.println(financialNews.size());
     }
 
     public ArrayList<GuanChaSouceData> getProductionNews() {
@@ -707,44 +653,31 @@ public class ParseHTML {
         try {
             Document productionPage = Jsoup.connect(moduleUrl.get(5)).get();
             Elements mainPage = productionPage.select(".two-coloum");
-            //System.out.println(mainPage.size());
 
             //第一段的头条新闻解析
             Elements toutiao = mainPage.select(".main_image").select("li");
-            //System.out.println(toutiao.size());
             for(Element ele : toutiao) {
                 String articleUrl = ele.select("a").get(0).attr("abs:href");
-                //System.out.println(articleUrl);
                 String imageUrl = ele.select("img").get(0).attr("abs:src");
-                //System.out.println(imageUrl);
                 String title = ele.select("span").get(0).text();
-                System.out.println(title);
-                productionNews.add(new GuanChaSouceData(title, "", "", imageUrl, "", 0, 0, "", articleUrl));
+                productionNews.add(new GuanChaSouceData(NEWS_TYPE.PRODUCTION,title, "", "", imageUrl, "", 0, 0, "", articleUrl));
             }
             //第一段剩下的文章的解析
             Elements firstSegment = mainPage.select(".new-left-list").select("li");
             for(Element ele : firstSegment) {
                 String imageUrl = ele.select("img").get(0).attr("abs:src");
-                //System.out.println(imageUrl);
                 String articleUrl = ele.select("a").get(0).attr("abs:href");
-                //System.out.println(articleUrl);
                 String title = ele.select("h4").get(0).text();
-                //System.out.println(title);
                 String shortArticle = ele.select("p").text();
-                //System.out.println(shortArticle);
                 String belongTo = ele.select(".interact-key").text();
-                //System.out.println(belongTo);
-                productionNews.add(new GuanChaSouceData(title, "", "", imageUrl, shortArticle, 0, 0, belongTo, articleUrl));
+                productionNews.add(new GuanChaSouceData(NEWS_TYPE.PRODUCTION,title, "", "", imageUrl, shortArticle, 0, 0, belongTo, articleUrl));
             }
-            //System.out.println(productionNews.size());
 
             Elements secondSegment = mainPage.select(".column-right-title").select("li");
             for(Element ele : secondSegment) {
                 String articleUrl = ele.select("a").get(0).attr("abs:href");
-                //System.out.println(articleUrl);
                 String title = ele.select("a").get(0).text();
-                System.out.println(title);
-                productionNews.add(new GuanChaSouceData(title, "", "", "", "", 0, 0, "", articleUrl));
+                productionNews.add(new GuanChaSouceData(NEWS_TYPE.PRODUCTION,title, "", "", "", "", 0, 0, "", articleUrl));
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -769,44 +702,31 @@ public class ParseHTML {
         try {
             Document tecnologyPage = Jsoup.connect(moduleUrl.get(6)).get();
             Elements mainPage = tecnologyPage.select(".two-coloum");
-            //System.out.println(mainPage.size());
 
             //第一段的头条新闻解析
             Elements toutiao = mainPage.select(".main_image").select("li");
-            //System.out.println(toutiao.size());
             for(Element ele : toutiao) {
                 String articleUrl = ele.select("a").get(0).attr("abs:href");
-                //System.out.println(articleUrl);
                 String imageUrl = ele.select("img").get(0).attr("abs:src");
-                //System.out.println(imageUrl);
                 String title = ele.select("span").get(0).text();
-                System.out.println(title);
-                tecnologyNews.add(new GuanChaSouceData(title, "", "", imageUrl, "", 0, 0, "", articleUrl));
+                tecnologyNews.add(new GuanChaSouceData(NEWS_TYPE.TECHNOLOGY,title, "", "", imageUrl, "", 0, 0, "", articleUrl));
             }
             //第一段剩下的文章的解析
             Elements firstSegment = mainPage.select(".new-left-list").select("li");
             for(Element ele : firstSegment) {
                 String imageUrl = ele.select("img").get(0).attr("abs:src");
-                //System.out.println(imageUrl);
                 String articleUrl = ele.select("a").get(0).attr("abs:href");
-                //System.out.println(articleUrl);
                 String title = ele.select("h4").get(0).text();
-                //System.out.println(title);
                 String shortArticle = ele.select("p").text();
-                //System.out.println(shortArticle);
                 String belongTo = ele.select(".interact-key").text();
-                //System.out.println(belongTo);
-                tecnologyNews.add(new GuanChaSouceData(title, "", "", imageUrl, shortArticle, 0, 0, belongTo, articleUrl));
+                tecnologyNews.add(new GuanChaSouceData(NEWS_TYPE.TECHNOLOGY,title, "", "", imageUrl, shortArticle, 0, 0, belongTo, articleUrl));
             }
-            //System.out.println(productionNews.size());
 
             Elements secondSegment = mainPage.select(".column-right-title").select("li");
             for(Element ele : secondSegment) {
                 String articleUrl = ele.select("a").get(0).attr("abs:href");
-                //System.out.println(articleUrl);
                 String title = ele.select("a").get(0).text();
-                System.out.println(title);
-                tecnologyNews.add(new GuanChaSouceData(title, "", "", "", "", 0, 0, "", articleUrl));
+                tecnologyNews.add(new GuanChaSouceData(NEWS_TYPE.TECHNOLOGY,title, "", "", "", "", 0, 0, "", articleUrl));
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -831,44 +751,30 @@ public class ParseHTML {
         try {
             Document autoPage = Jsoup.connect(moduleUrl.get(7)).get();
             Elements mainPage = autoPage.select(".two-coloum");
-            //System.out.println(mainPage.size());
 
             //第一段的头条新闻解析
             Elements toutiao = mainPage.select(".main_image").select("li");
-            //System.out.println(toutiao.size());
             for(Element ele : toutiao) {
                 String articleUrl = ele.select("a").get(0).attr("abs:href");
-                //System.out.println(articleUrl);
                 String imageUrl = ele.select("img").get(0).attr("abs:src");
-                //System.out.println(imageUrl);
                 String title = ele.select("span").get(0).text();
-                System.out.println(title);
-                autoNews.add(new GuanChaSouceData(title, "", "", imageUrl, "", 0, 0, "", articleUrl));
+                autoNews.add(new GuanChaSouceData(NEWS_TYPE.AUTO,title, "", "", imageUrl, "", 0, 0, "", articleUrl));
             }
             //第一段剩下的文章的解析
             Elements firstSegment = mainPage.select(".new-left-list").select("li");
             for(Element ele : firstSegment) {
                 String imageUrl = ele.select("img").get(0).attr("abs:src");
-                //System.out.println(imageUrl);
                 String articleUrl = ele.select("a").get(0).attr("abs:href");
-                //System.out.println(articleUrl);
                 String title = ele.select("h4").get(0).text();
-                //System.out.println(title);
                 String shortArticle = ele.select("p").text();
-                //System.out.println(shortArticle);
                 String belongTo = ele.select(".interact-key").text();
-                //System.out.println(belongTo);
-                autoNews.add(new GuanChaSouceData(title, "", "", imageUrl, shortArticle, 0, 0, belongTo, articleUrl));
+                autoNews.add(new GuanChaSouceData(NEWS_TYPE.AUTO,title, "", "", imageUrl, shortArticle, 0, 0, belongTo, articleUrl));
             }
-            //System.out.println(productionNews.size());
-
             Elements secondSegment = mainPage.select(".column-right-title").select("li");
             for(Element ele : secondSegment) {
                 String articleUrl = ele.select("a").get(0).attr("abs:href");
-                //System.out.println(articleUrl);
                 String title = ele.select("a").get(0).text();
-                System.out.println(title);
-                autoNews.add(new GuanChaSouceData(title, "", "", "", "", 0, 0, "", articleUrl));
+                autoNews.add(new GuanChaSouceData(NEWS_TYPE.AUTO,title, "", "", "", "", 0, 0, "", articleUrl));
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -893,36 +799,27 @@ public class ParseHTML {
         try {
             Document leadPage = Jsoup.connect(moduleUrl.get(8)).get();
             Elements toutiao = leadPage.select("#idSlider").get(0).select("a");
-            //System.out.println(toutiao.text());
             for(Element ele : toutiao) {
                 String articleUrl = ele.attr("abs:href");
                 String title = ele.select("img").get(0).attr("alt");
-                //System.out.println(title);
                 String imageUrl = ele.select("img").get(0).attr("abs:src");
-                //System.out.println(imageUrl);
-                leadAheadNews.add(new GuanChaSouceData(title, "", "", imageUrl, "", 0, 0, "", articleUrl));
+                leadAheadNews.add(new GuanChaSouceData(NEWS_TYPE.LEADING,title, "", "", imageUrl, "", 0, 0, "", articleUrl));
             }
 
             //普通新闻解析
             Elements normalNews = leadPage.select(".edge-list").select("li");
-            //System.out.println(normalNews.size());
             for(Element ele : normalNews) {
                 Elements titleSection = ele.select("h4").select("a");
                 String articleUrl = titleSection.get(titleSection.size() - 1).attr("abs:href");
-                //System.out.println(articleUrl);
                 String title = titleSection.get(titleSection.size() - 1).text();
                 String authorName = ele.select(".author-intro").select("p").select("a").get(0).text();
-                //System.out.println(author);
                 String authorIntroduction =ele.select(".author-intro").select("span").get(0).text();
-                //System.out.println(authorIntroduction);
                 String imageUrl = ele.select(".img").select("img").attr("abs:src");
                 String shortArticle = ele.select(".module-artile").get(0).text();
-                //System.out.println(imageUrl);
-                //System.out.println(shortArticle);
                 int readsNum = 0;
                 int commentNum = 0;
                 String belongTo = "";
-                leadAheadNews.add(new GuanChaSouceData(title, authorName, authorIntroduction, imageUrl, shortArticle, readsNum, commentNum, belongTo, articleUrl));
+                leadAheadNews.add(new GuanChaSouceData(NEWS_TYPE.LEADING,title, authorName, authorIntroduction, imageUrl, shortArticle, readsNum, commentNum, belongTo, articleUrl));
             }
         }catch(IOException e) {e.printStackTrace();}
     }
@@ -948,49 +845,40 @@ public class ParseHTML {
             Elements firstSegment = videoPage.select(".new-left-list").select("li");
             for(Element ele : firstSegment) {
                 String articleUrl = ele.select("h4").select("a").get(0).attr("abs:href");
-                //System.out.println(articleUrl);
                 String title = ele.select("h4").get(0).text();
-                //System.out.println(title);
                 String authorName = "";
                 String authorIntroduction = "";
                 String imageUrl = ele.select("img").get(0).attr("abs:src");
                 if(!imageUrl.substring(imageUrl.length() - 5).contains(".")) {
                     imageUrl = "";
                 }
-                //System.out.println(imageUrl);
                 String shortArticle = "";
                 int readsNum = ele.select(".interact-attention").get(0).text().equals("") ? 0 : Integer.parseInt(ele.select(".interact-attention").get(0).text());
-                //System.out.println(reads);
                 int commentNum = ele.select(".interact-comment").get(0).text().equals("") ? 0 : Integer.parseInt(ele.select(".interact-comment").get(0).text());
-                //System.out.println(comment);
                 String belongTo = ele.select(".interact-key").size() == 0 ? "" : ele.select(".interact-key").get(0).text();
-                //System.out.println(belongTo);
-                videoNews.add(new GuanChaSouceData(title, authorName, authorIntroduction, imageUrl, shortArticle, readsNum, commentNum, belongTo, articleUrl));
+                videoNews.add(new GuanChaSouceData(NEWS_TYPE.VIDEO,title, authorName, authorIntroduction, imageUrl, shortArticle, readsNum, commentNum, belongTo, articleUrl));
             }
 
             //第二段解析
             Elements secondSegment = videoPage.select(".Review-item").select("li");
             for(Element ele : secondSegment) {
                 String articleUrl = ele.select("h4").select("a").get(0).attr("abs:href");
-                //System.out.println(articleUrl);
                 String title = ele.select("h4").get(0).text();
-                //System.out.println(title);
                 String authorName = "";
                 String authorIntroduction = "";
                 String imageUrl = "";
                 String shortArticle = ele.select("p").text();
-                System.out.println(shortArticle);
                 int readsNum = ele.select(".interact-attention").get(0).text().equals("") ? 0 : Integer.parseInt(ele.select(".interact-attention").get(0).text());
-                //System.out.println(reads);
                 int commentNum = ele.select(".interact-comment").get(0).text().equals("") ? 0 : Integer.parseInt(ele.select(".interact-comment").get(0).text());
-                //System.out.println(comment);
                 String belongTo = ele.select(".interact-key").size() == 0 ? "" : ele.select(".interact-key").get(0).text();
-                //System.out.println(belongTo);
-                videoNews.add(new GuanChaSouceData(title, authorName, authorIntroduction, imageUrl, shortArticle, readsNum, commentNum, belongTo, articleUrl));
+                videoNews.add(new GuanChaSouceData(NEWS_TYPE.VIDEO,title, authorName, authorIntroduction, imageUrl, shortArticle, readsNum, commentNum, belongTo, articleUrl));
             }
         } catch (IOException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
+    }
+
+    public static enum NEWS_TYPE{
+        FIRST_PAGE,FENGWEN,INTERNATIONAL,MILITARY,FINANCIAL,PRODUCTION,TECHNOLOGY,AUTO,LEADING,VIDEO
     }
 }
