@@ -54,7 +54,7 @@ public class ParseHTML {
         if (viseHead.size() != 0) {
             for (Element ele : viseHead) {
                 if (!ele.text().equals("")) {
-                    importantNews.add(new GuanChaSouceData(NEWS_TYPE.FIRST_PAGE,ele.text(),"","","","",0,0,"",ele.attr("abs:href")));
+                    importantNews.add(new GuanChaSouceData(NEWS_TYPE.FIRST_PAGE,ele.text(),"","","","",0,0,"",ele.select("a").get(0).attr("abs:href")));
                 }
             }
         }

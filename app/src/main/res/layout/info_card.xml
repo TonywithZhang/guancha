@@ -7,7 +7,7 @@
 
     <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
-        app:cardCornerRadius="5dp"
+        app:cardCornerRadius="0dp"
         app:cardElevation="5dp"
         android:id="@+id/card"
         android:layout_gravity="center"
@@ -26,6 +26,7 @@
             <ImageView
                 android:layout_width="20dp"
                 android:layout_height="20dp"
+                android:transitionName="animation_image"
                 android:src="@drawable/ic_touch_app_black_36dp"
                 android:layout_toRightOf="@id/news_image"
                 android:layout_toEndOf="@id/news_image"

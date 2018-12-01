@@ -24,7 +24,7 @@ import java.util.List;
  * An example full-screen activity that shows and hides the system UI (i.e.
  * status bar and navigation/system bar) with user interaction.
  */
-public class WelcomeActivity extends AppCompatActivity {
+public class WelcomeActivity extends BaseActivity {
     private static final String TAG = "观察者网app";
 
     //private LottieAnimationView w1,w2,w3,w4,w5,w6,w7,w8,w9,w10,w11,w12;

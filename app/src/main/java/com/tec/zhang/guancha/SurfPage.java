@@ -44,7 +44,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-public class SurfPage extends AppCompatActivity {
+public class SurfPage extends BaseActivity {
     private static final String TAG = "主视图里面  ";
     private final String[] MODULES = {
             "首页","风闻","国际","军事","财经","产经","科技","汽车","智库前沿","视频"
