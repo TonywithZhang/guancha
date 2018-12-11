@@ -18,15 +18,16 @@
             <ImageView
                 android:layout_width="75dp"
                 android:layout_marginTop="2dp"
+                android:scaleType="centerCrop"
                 android:contentDescription="@string/news_pic"
                 android:layout_marginStart="2dp"
                 android:layout_marginLeft="2dp"
                 android:id="@+id/news_image"
+                android:transitionName="animation_image"
                 android:layout_height="75dp" />
             <ImageView
                 android:layout_width="20dp"
                 android:layout_height="20dp"
-                android:transitionName="animation_image"
                 android:src="@drawable/ic_touch_app_black_36dp"
                 android:layout_toRightOf="@id/news_image"
                 android:layout_toEndOf="@id/news_image"

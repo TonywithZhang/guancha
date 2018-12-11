@@ -11,18 +11,25 @@ import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.json.XML;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 
 import static androidx.constraintlayout.widget.Constraints.TAG;
 
 public class ParseHTML {
     private boolean transferFinish = false;
-    final String guanchaUrl = "https://www.guancha.cn/";
+    private final String guanchaUrl = "https://www.guancha.cn/";
     //final String picDirectory = "D:\\downloaded\\ugopen\\guanchaPic";
     private Document guanchaWebPage;
     private ArrayList<GuanChaSouceData> importantNews;
@@ -37,7 +44,6 @@ public class ParseHTML {
     }
 
     /**
-
      * 获取头条新闻
      * */
     public  void getHeadLine() {
@@ -222,6 +228,11 @@ public class ParseHTML {
                 return new GuanChaSouceData[size];
             }
         };
+
+        public boolean equals(@Nullable GuanChaSouceData obj) {
+            assert obj != null: "传入的数据为空";
+            return articleUrl.equals(obj.articleUrl);
+        }
     }
     /**
      * 得到模块的链接
@@ -250,18 +261,11 @@ public class ParseHTML {
      *
      * */
     private ArrayList<GuanChaSouceData> fengwenList;
-    public void parseFengwen(){
-        while (!transferFinish){
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
+    public void parseFengwen(String moduleName){
         fengwenList = new ArrayList<>();
 
         try {
-            Document fengwenDoc = Jsoup.connect(moduleUrl.get(1)).get();
+            Document fengwenDoc = Jsoup.connect(moduleName).get();
             Elements fengwenNews = fengwenDoc.select(".active").select(".orderby-last-publish").select("li");
             for(Element ele : fengwenNews) {
                 if(ele.select(".list-item").size() == 0) {
@@ -285,16 +289,65 @@ public class ParseHTML {
                 String belongTo = ele.select(".topic_tag").get(0).text();
                 fengwenList.add(new GuanChaSouceData(NEWS_TYPE.FENGWEN,title, authorName, authorIntroduction, imageUrl, shortArticle, reads, comment, belongTo, articleUrl));
             }
-            Log.d(TAG, "parseFengwen: 新闻列表总共" + fengwenList.size() + "条");
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
-
+    public void parseFengwen(){
+        while (!transferFinish){
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        parseFengwen(moduleUrl.get(1));
+    }
     public ArrayList<GuanChaSouceData> getFengwenList() {
         return fengwenList;
     }
-
+    public static ArrayList<GuanChaSouceData> nextFengwenPage(String requestUrl){
+        ArrayList<GuanChaSouceData> news = new ArrayList<>();
+        try {
+            OkHttpClient client = new OkHttpClient();
+            Request request = new Request.Builder().url(requestUrl).build();
+            Response response = client.newCall(request).execute();
+            String respond = response.body().string().replace("\\r","").replace("\\n","").replace("\\t","").replace("\\","");
+            Log.d(TAG, "nextFengwenPage: 新闻请求的链接为" + requestUrl);
+            Log.d(TAG, "nextFengwenPage: 回复内容的前100个字符为:" + respond.substring(0,100));
+            Document doc;
+            if (response.body() != null) {
+                doc = Jsoup.parse(respond);
+            }else doc = Jsoup.connect(requestUrl).get();
+            Elements elements = doc.select(".index-list-item");
+            for (Element ele : elements){
+                if(ele.select(".list-item").size() == 0) {
+                    continue;
+                }
+                String articleUrl = ele.select(".list-item").select("h4").get(0).select("a").get(0).attr("abs:href");
+                String title = ele.select(".list-item").select("h4").get(0).text();
+                String authorName = ele.select(".user-box").select(".user-main").select("a").get(0).text();
+                String authorIntroduction = ele.select(".user-box").select(".user-main").select("p").get(0).text();
+                String imageUrl = ele.select(".item-pic").select("img").size() == 0? "": ele.select(".item-pic").select("img").get(0).attr("abs:src");
+                String shortArticle = ele.select(".item-info").select(".item-content").get(0).text();
+                Elements readsString = ele.select(".op-tools").select("a");
+                int reads = 0;
+                for(Element read : readsString) {
+                    if(read.text().startsWith("点击")) {
+                        reads = read.select("span").get(0).text().equals("")? 0: Integer.parseInt(read.select("span").get(0).text());
+                    }
+                }
+                String commentString = ele.select(".op-tools").select(".comment").select("span").get(0).text();
+                int comment = commentString.equals("")?0 : Integer.parseInt(commentString);
+                String belongTo = ele.select(".topic_tag").get(0).text();
+                news.add(new GuanChaSouceData(NEWS_TYPE.FENGWEN,title, authorName, authorIntroduction, imageUrl, shortArticle, reads, comment, belongTo, articleUrl));
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        Log.d(TAG, "nextFengwenPage: 加载更多风闻被调用，列表长度为：" + news.size());
+        return news;
+    }
     /**
      * 国际页面解析
      * */
@@ -304,6 +357,17 @@ public class ParseHTML {
         return internationalNews;
     }
 
+    public void createInternationalNews(String moduleName){
+        internationalNews = new ArrayList<>();
+        try {
+            Document internationalPage = Jsoup.connect(moduleName).get();
+            if (internationalPage.select(".two-coloum").size() == 0)
+            parseThreeColumn(internationalPage,internationalNews,NEWS_TYPE.INTERNATIONAL,"国际");
+            else parseTwoColumn(internationalPage,internationalNews,NEWS_TYPE.INTERNATIONAL,"国际");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
     public void createInternationalNews(){
         while (!transferFinish){
             try {
@@ -312,17 +376,8 @@ public class ParseHTML {
                 e.printStackTrace();
             }
         }
-        internationalNews = new ArrayList<>();
-        try {
-            Document internationalPage = Jsoup.connect(moduleUrl.get(2)).get();
-            if (internationalPage.select(".two-coloum").size() == 0)
-            parseThreeColumn(internationalPage,internationalNews,NEWS_TYPE.INTERNATIONAL,"国际");
-            else parseTwoColumn(internationalPage,internationalNews,NEWS_TYPE.INTERNATIONAL,"国际");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        createInternationalNews(moduleUrl.get(2));
     }
-
     /**
      * 军事页面解析
      * */
@@ -331,19 +386,11 @@ public class ParseHTML {
     }
 
     private  ArrayList<GuanChaSouceData> militaryNews;
-    public  void createMilitaryNews() {
-        while (!transferFinish){
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-
+    public  void createMilitaryNews(String moduleName) {
         militaryNews = new ArrayList<>();
 
         try {
-            Document militaryPage = Jsoup.connect(moduleUrl.get(3)).get();
+            Document militaryPage = Jsoup.connect(moduleName).get();
             if (militaryPage.select(".two-coloum").size() == 0)
                 parseThreeColumn(militaryPage,militaryNews,NEWS_TYPE.MILITARY,"军事");
             else parseTwoColumn(militaryPage,militaryNews,NEWS_TYPE.MILITARY,"军事");
@@ -351,7 +398,16 @@ public class ParseHTML {
             e.printStackTrace();
         }
     }
-
+    public void createMilitaryNews(){
+        while (!transferFinish){
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        createMilitaryNews(moduleUrl.get(3));
+    }
     /**
      * 财经页面解析
      * */
@@ -360,17 +416,10 @@ public class ParseHTML {
     }
 
     private ArrayList<GuanChaSouceData> financialNews;
-    public void createFinancialNews() {
-        while (!transferFinish){
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
+    public void createFinancialNews(String moduleName) {
         financialNews = new ArrayList<>();
         try {
-            Document financialPage = Jsoup.connect(moduleUrl.get(4)).get();
+            Document financialPage = Jsoup.connect(moduleName).get();
             if (financialPage.select(".two-coloum").size() == 0)
                 parseThreeColumn(financialPage,financialNews,NEWS_TYPE.FINANCIAL,"财经");
             else parseTwoColumn(financialPage,financialNews,NEWS_TYPE.FINANCIAL,"财经");
@@ -378,7 +427,16 @@ public class ParseHTML {
             e.printStackTrace();
         }
     }
-
+    public void createFinancialNews(){
+        while (!transferFinish){
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        createFinancialNews(moduleUrl.get(4));
+    }
     /**
      * 产经页面解析
      * */
@@ -387,7 +445,19 @@ public class ParseHTML {
     }
 
     private ArrayList<GuanChaSouceData> productionNews;
-    public void createProductionNews() {
+    public void createProductionNews(String moduleName) {
+        productionNews = new ArrayList<>();
+
+        try {
+            Document productionPage = Jsoup.connect(moduleName).get();
+            if (productionPage.select(".two-coloum").size() == 0)
+                parseThreeColumn(productionPage,productionNews,NEWS_TYPE.PRODUCTION,"产经");
+            else parseTwoColumn(productionPage,productionNews,NEWS_TYPE.PRODUCTION,"产经");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    public void createProductionNews(){
         while (!transferFinish){
             try {
                 Thread.sleep(100);
@@ -395,16 +465,7 @@ public class ParseHTML {
                 e.printStackTrace();
             }
         }
-        productionNews = new ArrayList<>();
-
-        try {
-            Document productionPage = Jsoup.connect(moduleUrl.get(5)).get();
-            if (productionPage.select(".two-coloum").size() == 0)
-                parseThreeColumn(productionPage,productionNews,NEWS_TYPE.PRODUCTION,"产经");
-            else parseTwoColumn(productionPage,productionNews,NEWS_TYPE.PRODUCTION,"产经");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        createProductionNews(moduleUrl.get(5));
     }
 
     /**
@@ -415,18 +476,11 @@ public class ParseHTML {
     }
 
     private ArrayList<GuanChaSouceData> tecnologyNews;
-    public void createTecnologyNews() {
-        while (!transferFinish){
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
+    public void createTecnologyNews(String moduleName) {
         tecnologyNews = new ArrayList<>();
 
         try {
-            Document tecnologyPage = Jsoup.connect(moduleUrl.get(6)).get();
+            Document tecnologyPage = Jsoup.connect(moduleName).get();
             if (tecnologyPage.select(".two-coloum").size() == 0)
                 parseThreeColumn(tecnologyPage,tecnologyNews,NEWS_TYPE.TECHNOLOGY,"科技");
             else parseTwoColumn(tecnologyPage,tecnologyNews,NEWS_TYPE.TECHNOLOGY,"科技");
@@ -434,7 +488,16 @@ public class ParseHTML {
             e.printStackTrace();
         }
     }
-
+    public void createTecnologyNews(){
+        while (!transferFinish){
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        createTecnologyNews(moduleUrl.get(6));
+    }
     /**
      * 汽车页面解析
      * */
@@ -443,7 +506,19 @@ public class ParseHTML {
     }
 
     private ArrayList<GuanChaSouceData> autoNews;
-    public void createAutoNews() {
+    public void createAutoNews(String moduleName) {
+        autoNews = new ArrayList<>();
+
+        try {
+            Document autoPage = Jsoup.connect(moduleName).get();
+            if (autoPage.select(".two-coloum").size() == 0)
+                parseThreeColumn(autoPage,autoNews,NEWS_TYPE.AUTO,"汽车");
+            else parseTwoColumn(autoPage,autoNews,NEWS_TYPE.AUTO,"汽车");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    public void createAutoNews(){
         while (!transferFinish){
             try {
                 Thread.sleep(100);
@@ -451,16 +526,7 @@ public class ParseHTML {
                 e.printStackTrace();
             }
         }
-        autoNews = new ArrayList<>();
-
-        try {
-            Document autoPage = Jsoup.connect(moduleUrl.get(7)).get();
-            if (autoPage.select(".two-coloum").size() == 0)
-                parseThreeColumn(autoPage,autoNews,NEWS_TYPE.AUTO,"汽车");
-            else parseTwoColumn(autoPage,autoNews,NEWS_TYPE.AUTO,"汽车");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        createAutoNews(moduleUrl.get(7));
     }
     /**
      * 智库界面解析
@@ -470,18 +536,11 @@ public class ParseHTML {
     }
 
     private ArrayList<GuanChaSouceData> leadAheadNews;
-    public void createLeadAheadNews() {
-        while (!transferFinish){
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
+    public void createLeadAheadNews(String moduleName) {
         leadAheadNews = new ArrayList<>();
 
         try {
-            Document leadPage = Jsoup.connect(moduleUrl.get(8)).get();
+            Document leadPage = Jsoup.connect(moduleName).get();
             Elements toutiao = leadPage.select("#idSlider").get(0).select("a");
             for(Element ele : toutiao) {
                 String articleUrl = ele.attr("abs:href");
@@ -507,6 +566,16 @@ public class ParseHTML {
             }
         }catch(IOException e) {e.printStackTrace();}
     }
+    public void createLeadAheadNews(){
+        while (!transferFinish){
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        createLeadAheadNews(moduleUrl.get(8));
+    }
     /**
      * 视频页面解析
      * */
@@ -515,18 +584,11 @@ public class ParseHTML {
     }
 
     private ArrayList<GuanChaSouceData> videoNews;
-    public void createVideoNews() {
-        while (!transferFinish){
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
+    public void createVideoNews(String moduleName) {
         videoNews = new ArrayList<>();
 
         try {
-            Document videoPage = Jsoup.connect(moduleUrl.get(moduleUrl.size() - 1)).get();
+            Document videoPage = Jsoup.connect(moduleName).get();
             //新闻分为两页，下面是第一页
             Elements firstSegment = videoPage.select(".new-left-list").select("li");
             for(Element ele : firstSegment) {
@@ -563,7 +625,16 @@ public class ParseHTML {
             e.printStackTrace();
         }
     }
-
+    public void createVideoNews(){
+        while (!transferFinish){
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        createVideoNews(moduleUrl.get(moduleUrl.size() - 1));
+    }
     /**
      * 枚举类，表示新闻的类型
      * */
@@ -649,6 +720,7 @@ public class ParseHTML {
             moduleList.add(sourceData);}
     }
 
+    //解析两段格式的新闻页面
     private void parseTwoColumn(@NonNull Document page,ArrayList<GuanChaSouceData> moduleList, NEWS_TYPE type, String moduleName){
         Elements mainPage = page.select(".two-coloum");
 

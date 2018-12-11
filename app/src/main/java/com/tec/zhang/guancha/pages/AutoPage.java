@@ -36,6 +36,7 @@ public class AutoPage extends Fragment {
         recyclerView.addItemDecoration(new MyItemDecration(10));
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         recyclerView.setAdapter(cards);
+
         return autoView;
     }
 

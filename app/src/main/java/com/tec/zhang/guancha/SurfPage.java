@@ -2,11 +2,13 @@ package com.tec.zhang.guancha;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.viewpager.widget.ViewPager;
 
+import android.Manifest;
 import android.os.Bundle;
 import android.print.PrinterId;
 import android.util.Log;
@@ -49,11 +51,9 @@ public class SurfPage extends BaseActivity {
     private final String[] MODULES = {
             "首页","风闻","国际","军事","财经","产经","科技","汽车","智库前沿","视频"
     };
-    private List<String> fragmentNames;
-    private List<Fragment> fragments;
 
     private ParseHTML guanchaWeb;
-    private boolean parseFinishFlage = false;
+    private static boolean parseFinishFlage = false;
 
     private MainPage mainPage;
     private FengWenPage fengWenPage;
@@ -65,6 +65,7 @@ public class SurfPage extends BaseActivity {
     private AutoPage autoPage;
     private LeadingAheadPage leadingAheadPage;
     private VideoPage videoPage;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -75,16 +76,17 @@ public class SurfPage extends BaseActivity {
         ViewPager pager = findViewById(R.id.view_pager);
         TabLayout tabLayout = findViewById(R.id.tablayout);
         //tabLayout.setTabTextColors(0xffff00,0xff0000);
+        ActivityCompat.requestPermissions(this,new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE,Manifest.permission.READ_EXTERNAL_STORAGE},0x1);
         guanchaWeb = new ParseHTML();
         new Thread(new Runnable() {
             @Override
             public void run() {
                 guanchaWeb.init();
-                guanchaWeb.getHeadLine();
-                guanchaWeb.createNormalNews();
-                guanchaWeb.getImportantNews().addAll(guanchaWeb.getNormalNews());
+                //guanchaWeb.getHeadLine();
+                //guanchaWeb.createNormalNews();
+                //guanchaWeb.getImportantNews().addAll(guanchaWeb.getNormalNews());
                 guanchaWeb.createModuleUrls();
-                guanchaWeb.parseFengwen();
+                //guanchaWeb.parseFengwen();
                 guanchaWeb.createInternationalNews();
                 guanchaWeb.createMilitaryNews();
                 guanchaWeb.createFinancialNews();
@@ -112,12 +114,12 @@ public class SurfPage extends BaseActivity {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }*/
-        fragmentNames = new ArrayList<>(16);
+        List<String> fragmentNames = new ArrayList<>(16);
         for (String MODULE : MODULES) {
             tabLayout.addTab(tabLayout.newTab().setText(MODULE));
             fragmentNames.add(MODULE);
         }
-        fragments = new ArrayList<>(16);
+        List<Fragment> fragments = new ArrayList<>(16);
         fragments.add(mainPage);
         fragments.add(fengWenPage);
         fragments.add(internationalPage);
@@ -129,7 +131,7 @@ public class SurfPage extends BaseActivity {
         fragments.add(leadingAheadPage);
         fragments.add(videoPage);
 
-        FragmentIndicator fragmentAdapter = new FragmentIndicator(getSupportFragmentManager(),fragments,fragmentNames);
+        FragmentIndicator fragmentAdapter = new FragmentIndicator(getSupportFragmentManager(), fragments, fragmentNames);
         pager.setAdapter(fragmentAdapter);
         tabLayout.setupWithViewPager(pager);
         new Thread(displayItems).start();
@@ -144,9 +146,9 @@ public class SurfPage extends BaseActivity {
                     e.printStackTrace();
                 }
             }
-            Log.d(TAG, "run: 首页视图里面，更新视图方法被调用");
-            mainPage.setNewsSingles(guanchaWeb.getImportantNews());
-            fengWenPage.setNewsList(guanchaWeb.getFengwenList());
+
+            //mainPage.setNewsSingles(guanchaWeb.getImportantNews());
+            //fengWenPage.setNewsList(guanchaWeb.getFengwenList());
             internationalPage.setNewsList(guanchaWeb.getInternationalNews());
             militaryPage.setNewsList(guanchaWeb.getMilitaryNews());
             financialPage.setNewsList(guanchaWeb.getFinancialNews());
@@ -158,8 +160,8 @@ public class SurfPage extends BaseActivity {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    mainPage.updateView();
-                    fengWenPage.updateView();
+                    //mainPage.updateView();
+                    //fengWenPage.updateView();
                     /*internationalPage.updateView();
                     militaryPage.updateView();
                     financialPage.updateView();

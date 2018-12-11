@@ -1,39 +1,45 @@
 package com.tec.zhang.guancha.pages;
 
-import android.annotation.SuppressLint;
+import android.os.Build;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
 import com.tec.zhang.guancha.R;
-import com.tec.zhang.guancha.recycler.Cards;
+import com.tec.zhang.guancha.paging.ItemAdapter;
+import com.tec.zhang.guancha.paging.MainPageNewsViewModel;
 import com.tec.zhang.guancha.recycler.MyItemDecration;
-import com.tec.zhang.guancha.recycler.NewsSingle;
 import com.tec.zhang.guancha.recycler.ParseHTML;
 
 import java.util.ArrayList;
-import java.util.List;
+import java.util.Objects;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProvider;
+import androidx.paging.PagedList;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-
-import static androidx.constraintlayout.widget.Constraints.TAG;
 
 public class MainPage extends Fragment {
     //private boolean finished = false;
     //private ParseHTML parseHTML;
-    Cards cards;
+    //Cards cards;
+    ItemAdapter adapter;
+    MainPageNewsViewModel model;
+/*
+    public static boolean getModulesFinished = false;
     public void setNewsSingles(List<ParseHTML.GuanChaSouceData> newsSingles) {
         this.newsSingles.clear();
         this.newsSingles.addAll(newsSingles);
     }
 
     private List<ParseHTML.GuanChaSouceData> newsSingles = new ArrayList<>();
+*/
 
     public static MainPage newInstance(ArrayList<ParseHTML.GuanChaSouceData> news) {
 
@@ -41,10 +47,11 @@ public class MainPage extends Fragment {
         args.putParcelableArrayList("news",news);
         MainPage fragment = new MainPage();
         fragment.setArguments(args);
-        fragment.setNewsSingles(news);
+        //fragment.setNewsSingles(news);
         return fragment;
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -68,11 +75,21 @@ public class MainPage extends Fragment {
                 e.printStackTrace();
             }
         }*/
-        cards = new Cards(newsSingles,getActivity());
+
+        //cards = new Cards(newsSingles,getActivity());
+        adapter = new ItemAdapter(getActivity());
         recyclerView.addItemDecoration(new MyItemDecration(10));
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        recyclerView.setAdapter(cards);
-        recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
+        recyclerView.setAdapter(adapter);
+        ViewModelProvider provider = new ViewModelProvider(getViewModelStore(),new ViewModelProvider.AndroidViewModelFactory(Objects.requireNonNull(getActivity()).getApplication()));
+        model = provider.get(MainPageNewsViewModel.class);
+        model.getNewsList().observe(getActivity(), new Observer<PagedList<ParseHTML.GuanChaSouceData>>() {
+            @Override
+            public void onChanged(PagedList<ParseHTML.GuanChaSouceData> guanChaSouceData) {
+                adapter.submitList(model.getNewsList().getValue());
+            }
+        });
+        /*recyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
             public void onScrollStateChanged(@NonNull RecyclerView recyclerView, int newState) {
                 super.onScrollStateChanged(recyclerView, newState);
@@ -85,12 +102,12 @@ public class MainPage extends Fragment {
 
                 }
             }
-        });
+        });*/
         //finished = false;
         return view;
     }
     public void updateView(){
-        Log.d(TAG, "updateView: 更新视图方法被执行，新闻列表里面的新闻数量为" + newsSingles.size());
-        cards.notifyDataSetChanged();
+        //Log.d(TAG, "updateView: 更新视图方法被执行，新闻列表里面的新闻数量为" + newsSingles.size());
+        adapter.notifyDataSetChanged();
     }
 }
