@@ -541,12 +541,14 @@ public class ParseHTML {
 
         try {
             Document leadPage = Jsoup.connect(moduleName).get();
-            Elements toutiao = leadPage.select("#idSlider").get(0).select("a");
-            for(Element ele : toutiao) {
-                String articleUrl = ele.attr("abs:href");
-                String title = ele.select("img").get(0).attr("alt");
-                String imageUrl = ele.select("img").get(0).attr("abs:src");
-                leadAheadNews.add(new GuanChaSouceData(NEWS_TYPE.LEADING,title, "", "", imageUrl, "", 0, 0, "", articleUrl));
+            if (leadPage.select("#idSlider").size() != 0) {
+                Elements toutiao = leadPage.select("#idSlider").get(0).select("a");
+                for(Element ele : toutiao) {
+                    String articleUrl = ele.attr("abs:href");
+                    String title = ele.select("img").get(0).attr("alt");
+                    String imageUrl = ele.select("img").get(0).attr("abs:src");
+                    leadAheadNews.add(new GuanChaSouceData(NEWS_TYPE.LEADING,title, "", "", imageUrl, "", 0, 0, "", articleUrl));
+                }
             }
 
             //普通新闻解析

@@ -30,8 +30,8 @@ public class FengwenDataSource extends PositionalDataSource<ParseHTML.GuanChaSou
     private int index = 2;
     private ArrayList<ParseHTML.GuanChaSouceData> additionDataList(int position,int loadSize){
         String requestUrl = "https://user.guancha.cn/main/index?page=" + index + "&order=2";
-        Log.d(TAG, "additionDataList: " + requestUrl);
-        ArrayList<ParseHTML.GuanChaSouceData> newsList = new ArrayList<>(ParseHTML.nextFengwenPage("https://user.guancha.cn/main/index?page=" + index + "&order=2"));
+        //Log.d(TAG, "additionDataList: " + requestUrl);
+        ArrayList<ParseHTML.GuanChaSouceData> newsList = new ArrayList<>(ParseHTML.nextFengwenPage(requestUrl));
         index ++;
         return newsList;
     }

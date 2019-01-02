@@ -14,7 +14,7 @@ import static androidx.constraintlayout.widget.Constraints.TAG;
 public class MainPageNewsDataSource extends PositionalDataSource<ParseHTML.GuanChaSouceData> {
 
     private ArrayList<ParseHTML.GuanChaSouceData> dataSource = new ArrayList<>();
-    private ParseHTML parseHTML;
+
     @Override
     public void loadInitial(@NonNull LoadInitialParams params, @NonNull LoadInitialCallback<ParseHTML.GuanChaSouceData> callback) {
         final int startPosition = 0;
@@ -41,7 +41,7 @@ public class MainPageNewsDataSource extends PositionalDataSource<ParseHTML.GuanC
         return newsList;
     }
     private void fetchNews(){
-        parseHTML = new ParseHTML();
+        ParseHTML parseHTML = new ParseHTML();
         parseHTML.init();
         parseHTML.getHeadLine();
         parseHTML.createNormalNews();

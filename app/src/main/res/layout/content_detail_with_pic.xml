@@ -13,7 +13,7 @@
         android:layout_height="wrap_content"
         android:id="@+id/detail_text_pic"
         android:layout_margin="@dimen/text_margin"
-        android:textSize="23sp"
+        android:textSize="15sp"
          />
 
 </androidx.core.widget.NestedScrollView>

@@ -1,10 +1,12 @@
 package com.tec.zhang.guancha;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -19,8 +21,11 @@ import android.os.Environment;
 import android.text.SpannableString;
 import android.text.Spanned;
 import android.text.style.ForegroundColorSpan;
+import android.text.style.ImageSpan;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -32,7 +37,10 @@ import org.jsoup.select.Elements;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class DetailWithPic extends AppCompatActivity {
@@ -80,8 +88,7 @@ public class DetailWithPic extends AppCompatActivity {
 
     private void parseDetail(String articleUrl, ParseHTML.NEWS_TYPE type){
         try {
-            String article = "";
-
+            StringBuilder article = new StringBuilder();
             Map<String, String> header = new HashMap<>();
 
             header.put("User-Agent", "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36");
@@ -99,42 +106,67 @@ public class DetailWithPic extends AppCompatActivity {
             RandomAccessFile raf = new RandomAccessFile(log,"rw");
             raf.write(document.toString().getBytes());
             raf.close();*/
+                Elements eles = document.select(".last");
+                String fullUrl = null;
+                StringBuilder builder = new StringBuilder();
+                if(eles.size() != 0) {
+                    for(Element ele : eles) {
+                        fullUrl = ele.attr("onclick");
+                        if (! fullUrl.equals("")) {
+                            fullUrl = fullUrl.substring(fullUrl.indexOf("=") + 2,fullUrl.length() -2);
+                            builder.append(articleUrl.substring(0,articleUrl.indexOf("/",10))).append(fullUrl);
+                            document = Jsoup.connect(builder.toString()).headers(header).get();
+                            Log.d(TAG, "parseDetail: " + builder.toString());
+                        }
+                    }
+                }
                 Elements articleSegments = document.select(".all-txt").select("p");
                 if (articleSegments.size() == 0){
                     //Log.d(TAG, "parseDetail: 新闻格式不是all text");
                     articleSegments = document.select(".article-txt").select("p");
                 }
+                List<String> pictureUrls = new ArrayList<>(10);
+                int imageNumber = 0;
                 for (Element ele : articleSegments){
                     if (!ele.text().endsWith("截图")){
-                        article = article + ele.text() + "\n\n";
+                        article.append(ele.text()).append("\n");
+                        Elements pictures = ele.select("img");
+                        if (pictures.size() != 0){
+                            Element pic = pictures.get(0);
+                            article.append("placeHolder").append(imageNumber).append("\n");
+                            imageNumber ++;
+                            String imageUrl = pic.attr("abs:src");
+                            pictureUrls.add(imageUrl);
+                        }
+                    }else article.append(ele.text()).append("\n");
+                }
+                final SpannableString spannableString = new SpannableString(article);
+                if (pictureUrls.size() != 0){
+                    int index = 0;
+                    DisplayMetrics metrics = new DisplayMetrics();
+                    getWindowManager().getDefaultDisplay().getMetrics(metrics);
+                    int windowWidth = metrics.widthPixels;
+                    for (String pic : pictureUrls){
+                        URL pictureURL = new URL(pic);
+                        Drawable articlePic = Drawable.createFromStream(pictureURL.openStream(),"xinwentupian.jpg");
+                        float scale = ((float)articlePic.getIntrinsicHeight())/articlePic.getIntrinsicWidth();
+                        //Log.d(TAG, "parseDetail: 图片的纵横比例为：" + scale + "图片高度为:" + articlePic.getIntrinsicHeight() + "图片宽度为：" + articlePic.getIntrinsicWidth());
+                        articlePic.setBounds(0,0,windowWidth, (int) (windowWidth * scale));
+                        ImageSpan newsPic = new ImageSpan(articlePic);
+                        //Log.d(TAG, "parseDetail: " + pic);
+                        int firstIndex = article.indexOf("placeHolder" + index);
+                        index ++;
+                        spannableString.setSpan(newsPic,firstIndex,firstIndex + "placeHolder1".length(),Spanned.SPAN_INCLUSIVE_INCLUSIVE);
+                        Log.d(TAG, "parseDetail: 添加了一张图片");
                     }
                 }
-            /*if (type == ParseHTML.NEWS_TYPE.FENGWEN){
-                Elements articleSegments = document.select(".all-txt").select("p");
-                for (Element ele : articleSegments){
-                    if (!ele.text().endsWith("截图")){
-                        article = article + ele.text() + "\n\n";
-                    }
-                }
-            }else {
-                Elements articleSegments = document.select(".article-txt").select("p");
-                for (Element ele : articleSegments){
-                    if (!ele.text().endsWith("截图")){
-                        article = article + ele.text() + "\n\n";
-                    }
-                }
-            }*/
-                //Log.d(TAG, "parseDetail: "  + article);
-                final String finalArticle = article;
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        detailText.setText(finalArticle);
+                        detailText.setText(spannableString);
                     }
                 });
             }
-
-
         } catch (IOException e) {
             e.printStackTrace();
         }

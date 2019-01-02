@@ -87,7 +87,7 @@ public class SurfPage extends BaseActivity {
                 //guanchaWeb.getImportantNews().addAll(guanchaWeb.getNormalNews());
                 guanchaWeb.createModuleUrls();
                 //guanchaWeb.parseFengwen();
-                guanchaWeb.createInternationalNews();
+                //guanchaWeb.createInternationalNews();
                 guanchaWeb.createMilitaryNews();
                 guanchaWeb.createFinancialNews();
                 guanchaWeb.createProductionNews();
@@ -149,7 +149,7 @@ public class SurfPage extends BaseActivity {
 
             //mainPage.setNewsSingles(guanchaWeb.getImportantNews());
             //fengWenPage.setNewsList(guanchaWeb.getFengwenList());
-            internationalPage.setNewsList(guanchaWeb.getInternationalNews());
+            //internationalPage.setNewsList(guanchaWeb.getInternationalNews());
             militaryPage.setNewsList(guanchaWeb.getMilitaryNews());
             financialPage.setNewsList(guanchaWeb.getFinancialNews());
             productionPage.setNewsList(guanchaWeb.getProductionNews());
@@ -157,21 +157,21 @@ public class SurfPage extends BaseActivity {
             autoPage.setNewsList(guanchaWeb.getAutoNews());
             leadingAheadPage.setNewsList(guanchaWeb.getLeadAheadNews());
             videoPage.setNewsList(guanchaWeb.getVideoNews());
-            runOnUiThread(new Runnable() {
+            /*runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    //mainPage.updateView();
-                    //fengWenPage.updateView();
-                    /*internationalPage.updateView();
+                    mainPage.updateView();
+                    fengWenPage.updateView();
+                    internationalPage.updateView();
                     militaryPage.updateView();
                     financialPage.updateView();
                     productionPage.updateView();
                     tecnologyPage.updateView();
                     autoPage.updateView();
                     leadingAheadPage.updateView();
-                    videoPage.updateView();*/
+                    videoPage.updateView();
                 }
-            });
+            });*/
         }
     };
 }
