@@ -152,7 +152,7 @@ public class SurfPage extends BaseActivity {
             //internationalPage.setNewsList(guanchaWeb.getInternationalNews());
             //militaryPage.setNewsList(guanchaWeb.getMilitaryNews());
             //financialPage.setNewsList(guanchaWeb.getFinancialNews());
-            productionPage.setNewsList(guanchaWeb.getProductionNews());
+            //productionPage.setNewsList(guanchaWeb.getProductionNews());
             tecnologyPage.setNewsList(guanchaWeb.getTecnologyNews());
             autoPage.setNewsList(guanchaWeb.getAutoNews());
             leadingAheadPage.setNewsList(guanchaWeb.getLeadAheadNews());
