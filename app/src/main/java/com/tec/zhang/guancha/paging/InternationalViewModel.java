@@ -27,7 +27,6 @@ public class InternationalViewModel extends ViewModel {
             .build();
 
 
-
     public LiveData<PagedList<ParseHTML.GuanChaSouceData>> getInternationalLiveData() {
         return internationalLiveData;
     }

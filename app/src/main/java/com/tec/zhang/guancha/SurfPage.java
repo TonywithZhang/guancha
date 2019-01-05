@@ -88,7 +88,7 @@ public class SurfPage extends BaseActivity {
                 guanchaWeb.createModuleUrls();
                 //guanchaWeb.parseFengwen();
                 //guanchaWeb.createInternationalNews();
-                guanchaWeb.createMilitaryNews();
+                //guanchaWeb.createMilitaryNews();
                 guanchaWeb.createFinancialNews();
                 guanchaWeb.createProductionNews();
                 guanchaWeb.createTecnologyNews();
@@ -150,7 +150,7 @@ public class SurfPage extends BaseActivity {
             //mainPage.setNewsSingles(guanchaWeb.getImportantNews());
             //fengWenPage.setNewsList(guanchaWeb.getFengwenList());
             //internationalPage.setNewsList(guanchaWeb.getInternationalNews());
-            militaryPage.setNewsList(guanchaWeb.getMilitaryNews());
+            //militaryPage.setNewsList(guanchaWeb.getMilitaryNews());
             financialPage.setNewsList(guanchaWeb.getFinancialNews());
             productionPage.setNewsList(guanchaWeb.getProductionNews());
             tecnologyPage.setNewsList(guanchaWeb.getTecnologyNews());

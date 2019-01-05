@@ -11,7 +11,7 @@ import androidx.paging.PositionalDataSource;
 public class InternationalDataSource extends PositionalDataSource<ParseHTML.GuanChaSouceData> {
     private List<ParseHTML.GuanChaSouceData> dataSource = new ArrayList<>();
 
-    public InternationalDataSource() {
+    InternationalDataSource() {
         super();
     }
 
