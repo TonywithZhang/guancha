@@ -22,9 +22,7 @@ public class InternationalDataSource extends PositionalDataSource<ParseHTML.Guan
         parseHTML.createInternationalNews("https://www.guancha.cn/internation?s=dhguoji");
         dataSource = parseHTML.getInternationalNews();
         List<ParseHTML.GuanChaSouceData> internationalNews = new ArrayList<>();
-        for (int i = 0 ; i < params.requestedLoadSize ; i ++){
-            internationalNews.add(dataSource.get(i));
-        }
+        for (int i = 0 ; i < params.requestedLoadSize ; i ++) internationalNews.add(dataSource.get(i));
         callback.onResult(internationalNews,startPosition);
     }
 
