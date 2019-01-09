@@ -77,27 +77,27 @@ public class SurfPage extends BaseActivity {
         TabLayout tabLayout = findViewById(R.id.tablayout);
         //tabLayout.setTabTextColors(0xffff00,0xff0000);
         ActivityCompat.requestPermissions(this,new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE,Manifest.permission.READ_EXTERNAL_STORAGE},0x1);
-        guanchaWeb = new ParseHTML();
+        /*guanchaWeb = new ParseHTML();
         new Thread(new Runnable() {
             @Override
             public void run() {
-                guanchaWeb.init();
+                //guanchaWeb.init();
                 //guanchaWeb.getHeadLine();
                 //guanchaWeb.createNormalNews();
                 //guanchaWeb.getImportantNews().addAll(guanchaWeb.getNormalNews());
-                guanchaWeb.createModuleUrls();
+                //guanchaWeb.createModuleUrls();
                 //guanchaWeb.parseFengwen();
                 //guanchaWeb.createInternationalNews();
                 //guanchaWeb.createMilitaryNews();
-                guanchaWeb.createFinancialNews();
-                guanchaWeb.createProductionNews();
-                guanchaWeb.createTecnologyNews();
-                guanchaWeb.createAutoNews();
-                guanchaWeb.createLeadAheadNews();
-                guanchaWeb.createVideoNews();
+                //guanchaWeb.createFinancialNews();
+                //guanchaWeb.createProductionNews();
+                //guanchaWeb.createTecnologyNews();
+                //guanchaWeb.createAutoNews();
+                //guanchaWeb.createLeadAheadNews();
+                //guanchaWeb.createVideoNews();
                 parseFinishFlage = true;
             }
-        }).start();
+        }).start();*/
 
         mainPage = new MainPage();
         fengWenPage = new FengWenPage();
@@ -155,8 +155,8 @@ public class SurfPage extends BaseActivity {
             //productionPage.setNewsList(guanchaWeb.getProductionNews());
             //tecnologyPage.setNewsList(guanchaWeb.getTecnologyNews());
             //autoPage.setNewsList(guanchaWeb.getAutoNews());
-            leadingAheadPage.setNewsList(guanchaWeb.getLeadAheadNews());
-            videoPage.setNewsList(guanchaWeb.getVideoNews());
+            //leadingAheadPage.setNewsList(guanchaWeb.getLeadAheadNews());
+            //videoPage.setNewsList(guanchaWeb.getVideoNews());
             /*runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
