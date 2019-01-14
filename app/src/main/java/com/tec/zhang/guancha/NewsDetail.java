@@ -38,6 +38,7 @@ public class NewsDetail extends AppCompatActivity {
         detailText = findViewById(R.id.news_detail_text);
         newsType = getIntent().getParcelableExtra("news");
         Log.d(TAG, "onCreate: " + newsType.getTitle());
+        setTitle(newsType.getTitle());
         new Thread(new Runnable() {
             @Override
             public void run() {

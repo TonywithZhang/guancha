@@ -13,6 +13,7 @@ import android.os.Bundle;
 import android.print.PrinterId;
 import android.util.Log;
 import android.view.KeyEvent;
+import android.view.Menu;
 import android.view.View;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
@@ -49,10 +50,10 @@ import java.util.Objects;
 public class SurfPage extends BaseActivity {
     private static final String TAG = "主视图里面  ";
     private final String[] MODULES = {
-            "首页","风闻","国际","军事","财经","产经","科技","汽车","智库前沿","视频"
+            "首页","风闻","国际","军事","财经","产经","科技","汽车","视频"
     };
 
-    private ParseHTML guanchaWeb;
+    //private ParseHTML guanchaWeb;
     private static boolean parseFinishFlage = false;
 
     private MainPage mainPage;
@@ -63,7 +64,7 @@ public class SurfPage extends BaseActivity {
     private ProductionPage productionPage;
     private TecnologyPage tecnologyPage;
     private AutoPage autoPage;
-    private LeadingAheadPage leadingAheadPage;
+    //private LeadingAheadPage leadingAheadPage;
     private VideoPage videoPage;
 
     @Override
@@ -107,7 +108,7 @@ public class SurfPage extends BaseActivity {
         productionPage = new ProductionPage();
         tecnologyPage = new TecnologyPage();
         autoPage = new AutoPage();
-        leadingAheadPage = new LeadingAheadPage();
+        //leadingAheadPage = new LeadingAheadPage();
         videoPage = new VideoPage();
         /*try {
             while (!parseFinishFlage) Thread.sleep(100);
@@ -128,7 +129,7 @@ public class SurfPage extends BaseActivity {
         fragments.add(productionPage);
         fragments.add(tecnologyPage);
         fragments.add(autoPage);
-        fragments.add(leadingAheadPage);
+        //fragments.add(leadingAheadPage);
         fragments.add(videoPage);
 
         FragmentIndicator fragmentAdapter = new FragmentIndicator(getSupportFragmentManager(), fragments, fragmentNames);
@@ -174,4 +175,10 @@ public class SurfPage extends BaseActivity {
             });*/
         }
     };
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_detail_with_pic,menu);
+        return super.onCreateOptionsMenu(menu);
+    }
 }

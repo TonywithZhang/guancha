@@ -100,4 +100,6 @@
         "when a user tries to pick up one of cards.\n\n"
     </string>
     <string name="action_settings">Settings</string>
+    <string name="part_news">离线部分新闻</string>
+    <string name="all_news">离线全部新闻</string>
 </resources>
