@@ -13,6 +13,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.AppCompat.Light.NoActionBar">
+
         <activity
             android:name=".WelcomeActivity"
             android:configChanges="orientation|keyboardHidden|screenSize"
@@ -26,15 +27,15 @@
         <activity
             android:name=".SurfPage"
             android:theme="@style/MyTheme" />
-        <activity android:name=".NewsDetail"
-            android:theme="@style/Theme.AppCompat.Light"
-            />
+        <activity
+            android:name=".NewsDetail"
+            android:theme="@style/Theme.AppCompat.Light" />
         <activity
             android:name=".DetailWithPic"
             android:label="@string/title_activity_detail_with_pic"
             android:theme="@style/MyTheme">
             <intent-filter>
-                <action android:name="android.intent.action.VIEW"/>
+                <action android:name="android.intent.action.VIEW" />
             </intent-filter>
         </activity>
     </application>

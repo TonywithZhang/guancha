@@ -102,4 +102,20 @@
     <string name="action_settings">Settings</string>
     <string name="part_news">离线部分新闻</string>
     <string name="all_news">离线全部新闻</string>
+    <string name="pic_date">1月22日</string>
+    <string name="temp_shanghai">上海 大风 2度</string>
+    <string name="poem_sstring">以梦为马，诗酒趁年华</string>
+    <string name="author_string">艺文/摄影</string>
+    <string name="poem_body">指间慢慢轨迹，如此繁复， 静书笔端流年，相思腕底，有一种， 即使是在梦里也无法都熬开的疼痛缭绕着。</string>
+    <string name="author_name">-----文/维塔XXXX------</string>
+    <string name="song_name">栖息</string>
+    <string name="singer">郭诚（橙子）</string>
+    <string name="song_time">4分8秒</string>
+    <string name="content_list">评论列表</string>
+    <string name="reader_name">半山的鸢尾</string>
+    <string name="coment_date">1-12</string>
+    <string name="coment_text">那些纠缠到深夜里的流言蜚语我不怕让你听到，也不怕让全世界听到，我是怕你听到了，并相信</string>
+    <string name="praise_num">38</string>
+
+    <string name="title_activity_test">TestActivity</string>
 </resources>

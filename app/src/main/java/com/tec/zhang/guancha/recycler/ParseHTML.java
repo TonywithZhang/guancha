@@ -55,8 +55,13 @@ public class ParseHTML {
         importantNews = new ArrayList<>();
         Elements guanchaHead = guanchaWebPage.getElementsByTag("h3");
         Element headLine = guanchaHead.get(0).select("a").get(0);
-        Element headImage = guanchaWebPage.select("img").select("[alt=" + headLine.text() + "]").get(0);
-        importantNews.add(new GuanChaSouceData(NEWS_TYPE.FIRST_PAGE,headLine.text(),"","",headImage.attr("abs:src"),"",0,0,"",headLine.attr("abs:href")));
+        Element headImage = null;
+        if (guanchaWebPage.select("img").select("[alt=" + headLine.text() + "]").size() != 0){
+            headImage = guanchaWebPage.select("img").select("[alt=" + headLine.text() + "]").get(0);
+            importantNews.add(new GuanChaSouceData(NEWS_TYPE.FIRST_PAGE,headLine.text(),"","",headImage.attr("abs:src"),"",0,0,"",headLine.attr("abs:href")));
+        }else {
+            importantNews.add(new GuanChaSouceData(NEWS_TYPE.FIRST_PAGE,headLine.text(),"","","","",0,0,"",headLine.attr("abs:href")));
+        }
 
         Elements viseHead = guanchaWebPage.select(".content-headline").select(".c_hidden");
         if (viseHead.size() != 0) {
