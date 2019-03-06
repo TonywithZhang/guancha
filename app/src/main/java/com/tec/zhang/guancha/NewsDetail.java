@@ -9,6 +9,9 @@ import android.text.Spanned;
 import android.text.style.ImageSpan;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.View;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.tec.zhang.guancha.recycler.ParseHTML;
@@ -28,6 +31,7 @@ import java.util.Map;
 public class NewsDetail extends AppCompatActivity {
     private static final String TAG = "第三页";
     TextView detailText;
+    private LinearLayout detailNoPic;
     ParseHTML.GuanChaSouceData newsType;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,6 +39,7 @@ public class NewsDetail extends AppCompatActivity {
         setContentView(R.layout.activity_news_detail);
         final String articleUrl = getIntent().getStringExtra("articleUrl");
         Log.d(TAG, "onCreate: " + articleUrl);
+        detailNoPic = findViewById(R.id.detail_no_pic_frame);
         detailText = findViewById(R.id.news_detail_text);
         newsType = getIntent().getParcelableExtra("news");
         Log.d(TAG, "onCreate: " + newsType.getTitle());
@@ -85,46 +90,42 @@ public class NewsDetail extends AppCompatActivity {
                     //Log.d(TAG, "parseDetail: 新闻格式不是all text");
                     articleSegments = document.select(".article-txt").select("p");
                 }
-                List<String> pictureUrls = new ArrayList<>(10);
-                int imageNumber = 0;
+                final LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,LinearLayout.LayoutParams.WRAP_CONTENT);
                 for (Element ele : articleSegments){
                     if (!ele.text().endsWith("截图")){
-                        article.append(ele.text()).append("\n");
+                        if (!ele.text().equals("")){
+                            TextView newsText = new TextView(NewsDetail.this);
+                            newsText.setText(ele.text());
+                            runOnUiThread(() -> detailNoPic.addView(newsText,layoutParams));
+                        }
+                        //article.append(ele.text()).append("\n");
                         Elements pictures = ele.select("img");
                         if (pictures.size() != 0){
                             Element pic = pictures.get(0);
-                            article.append("placeHolder").append(imageNumber).append("\n");
-                            imageNumber ++;
+                            //article.append("placeHolder").append(imageNumber).append("\n");
+                            //imageNumber ++;
                             String imageUrl = pic.attr("abs:src");
-                            pictureUrls.add(imageUrl);
+                            //pictureUrls.add(imageUrl);
+                            ImageView newsImage = new ImageView(NewsDetail.this);
+                            newsImage.setImageResource(R.drawable.ic_guancha);
+                            runOnUiThread(() -> detailNoPic.addView(newsImage,layoutParams));
+                            new Thread(() -> {
+                                try {
+                                    Drawable newsDetailPic = Drawable.createFromStream(new URL(imageUrl).openStream(),"xinwentupian.jpg");
+                                    runOnUiThread(() -> newsImage.setImageDrawable(newsDetailPic));
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
+                            }).start();
+
                         }
-                    }else article.append(ele.text()).append("\n");
-                }
-                final SpannableString spannableString = new SpannableString(article);
-                if (pictureUrls.size() != 0){
-                    int index = 0;
-                    DisplayMetrics metrics = new DisplayMetrics();
-                    getWindowManager().getDefaultDisplay().getMetrics(metrics);
-                    int windowWidth = metrics.widthPixels;
-                    for (String pic : pictureUrls){
-                        URL pictureURL = new URL(pic);
-                        Drawable articlePic = Drawable.createFromStream(pictureURL.openStream(),"xinwentupian.jpg");
-                        float scale = articlePic.getIntrinsicHeight()/articlePic.getIntrinsicWidth();
-                        articlePic.setBounds(5,5,windowWidth,windowWidth * 9/16);
-                        ImageSpan newsPic = new ImageSpan(articlePic);
-                        Log.d(TAG, "parseDetail: " + pic);
-                        int firstIndex = article.indexOf("placeHolder" + index);
-                        index ++;
-                        spannableString.setSpan(newsPic,firstIndex,firstIndex + "placeHolder1".length(),Spanned.SPAN_INCLUSIVE_INCLUSIVE);
+                    }else{
+                        TextView newsText = new TextView(NewsDetail.this);
+                        newsText.setText(ele.text());
+                        runOnUiThread(() -> detailNoPic.addView(newsText,layoutParams));
                     }
                 }
-                //final String finalArticle = article.toString();
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        detailText.setText(spannableString);
-                    }
-                });
+                detailText.setVisibility(View.GONE);
             }
         } catch (IOException e) {
             e.printStackTrace();

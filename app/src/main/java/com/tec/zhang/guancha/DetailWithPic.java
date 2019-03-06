@@ -27,6 +27,7 @@ import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import org.jsoup.Jsoup;
@@ -46,6 +47,7 @@ import java.util.Map;
 public class DetailWithPic extends AppCompatActivity {
     private ImageView newsPic;
     private TextView detailText;
+    private LinearLayout detailFrame;
     ParseHTML.GuanChaSouceData newsType;
     private static final String TAG = "新闻页面里 ";
     @Override
@@ -56,6 +58,7 @@ public class DetailWithPic extends AppCompatActivity {
         setSupportActionBar(toolbar);
         newsPic = findViewById(R.id.detail_image);
         detailText = findViewById(R.id.detail_text_pic);
+        detailFrame = findViewById(R.id.detail_frame);
         Intent intent = getIntent();
         byte[] pic = intent.getByteArrayExtra("pic");
         newsPic.setImageBitmap(BitmapFactory.decodeByteArray(pic,0,pic.length));
@@ -125,33 +128,59 @@ public class DetailWithPic extends AppCompatActivity {
                     //Log.d(TAG, "parseDetail: 新闻格式不是all text");
                     articleSegments = document.select(".article-txt").select("p");
                 }
-                List<String> pictureUrls = new ArrayList<>(10);
-                int imageNumber = 0;
+                //List<String> pictureUrls = new ArrayList<>(10);
+                //int imageNumber = 0;
+                final LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,LinearLayout.LayoutParams.WRAP_CONTENT);
                 for (Element ele : articleSegments){
                     if (!ele.text().endsWith("截图")){
-                        article.append(ele.text()).append("\n");
+                        if (!ele.text().equals("")){
+                            TextView newsText = new TextView(DetailWithPic.this);
+                            newsText.setText(ele.text());
+                            runOnUiThread(() -> detailFrame.addView(newsText,layoutParams));
+                        }
+                        //article.append(ele.text()).append("\n");
                         Elements pictures = ele.select("img");
                         if (pictures.size() != 0){
                             Element pic = pictures.get(0);
-                            article.append("placeHolder").append(imageNumber).append("\n");
-                            imageNumber ++;
+                            //article.append("placeHolder").append(imageNumber).append("\n");
+                            //imageNumber ++;
                             String imageUrl = pic.attr("abs:src");
-                            pictureUrls.add(imageUrl);
+                            //pictureUrls.add(imageUrl);
+                            ImageView newsImage = new ImageView(DetailWithPic.this);
+                            newsImage.setImageResource(R.drawable.ic_guancha);
+                            runOnUiThread(() -> detailFrame.addView(newsImage,layoutParams));
+                            new Thread(() -> {
+                                try {
+                                    Drawable newsDetailPic = Drawable.createFromStream(new URL(imageUrl).openStream(),"xinwentupian.jpg");
+                                    runOnUiThread(() -> newsImage.setImageDrawable(newsDetailPic));
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
+                            }).start();
+
                         }
-                    }else article.append(ele.text()).append("\n");
+                    }else{
+                        TextView newsText = new TextView(DetailWithPic.this);
+                        newsText.setText(ele.text());
+                        runOnUiThread(() -> detailFrame.addView(newsText,layoutParams));
+                    }
                 }
-                final SpannableString spannableString = new SpannableString(article);
+                detailText.setVisibility(View.GONE);
+
+                /*final SpannableString spannableString = new SpannableString(article);
                 if (pictureUrls.size() != 0){
                     int index = 0;
                     DisplayMetrics metrics = new DisplayMetrics();
                     getWindowManager().getDefaultDisplay().getMetrics(metrics);
                     int windowWidth = metrics.widthPixels;
+                    Log.d(TAG, "parseDetail: 显示屏的宽度是" + windowWidth);
                     for (String pic : pictureUrls){
                         URL pictureURL = new URL(pic);
                         Drawable articlePic = Drawable.createFromStream(pictureURL.openStream(),"xinwentupian.jpg");
                         float scale = ((float)articlePic.getIntrinsicHeight())/articlePic.getIntrinsicWidth();
-                        //Log.d(TAG, "parseDetail: 图片的纵横比例为：" + scale + "图片高度为:" + articlePic.getIntrinsicHeight() + "图片宽度为：" + articlePic.getIntrinsicWidth());
+                        Log.d(TAG, "parseDetail: 图片的纵横比例为：" + scale + "图片高度为:" + articlePic.getIntrinsicHeight() + "图片宽度为：" + articlePic.getIntrinsicWidth());
                         articlePic.setBounds(0,0,windowWidth, (int) (windowWidth * scale));
+                        Log.d(TAG, "parseDetail: 图片显示出来的宽度是" + articlePic.getBounds().right);
                         ImageSpan newsPic = new ImageSpan(articlePic);
                         //Log.d(TAG, "parseDetail: " + pic);
                         int firstIndex = article.indexOf("placeHolder" + index);
@@ -165,7 +194,7 @@ public class DetailWithPic extends AppCompatActivity {
                     public void run() {
                         detailText.setText(spannableString);
                     }
-                });
+                });*/
             }
         } catch (IOException e) {
             e.printStackTrace();

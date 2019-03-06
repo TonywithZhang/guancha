@@ -69,6 +69,7 @@ public class ItemAdapter extends PagedListAdapter<ParseHTML.GuanChaSouceData,Ite
                 }else {
                     Intent intent = new Intent(activity,DetailWithPic.class);
                     intent.putExtra("articleUrl",single.getArticleUrl());
+                    intent.setExtrasClassLoader(ParseHTML.class.getClassLoader());
                     intent.putExtra("news",single);
                     drawableToBitmap(holder.newsPic.getDrawable());
                     intent.putExtra("pic",bitmap2Bytes(bitmap));
