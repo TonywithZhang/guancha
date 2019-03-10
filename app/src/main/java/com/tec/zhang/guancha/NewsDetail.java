@@ -10,6 +10,7 @@ import android.text.style.ImageSpan;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -85,10 +86,25 @@ public class NewsDetail extends AppCompatActivity {
                         }
                     }
                 }
-                Elements articleSegments = document.select(".all-txt").select("p");
-                if (articleSegments.size() == 0){
-                    //Log.d(TAG, "parseDetail: 新闻格式不是all text");
-                    articleSegments = document.select(".article-txt").select("p");
+                String[] segTagNames = {".all-txt",".article-txt",".article-txt-content"};
+                Elements articleSegments = new Elements();
+                for (String tagName : segTagNames){
+                    articleSegments = document.select(tagName).select("p");
+                    if (articleSegments.size() !=0) break;
+                }
+                if (articleSegments.size() == 0 ){
+                    Elements fenWenSeg = document.select("script");
+                    String realDocUrl;
+                    for (Element element : fenWenSeg) {
+                        String script = element.toString();
+                        if (script.contains("href")){
+                            realDocUrl = element.toString().substring(script.indexOf("href") + 6,script.lastIndexOf("\"")) ;
+                            Document fengwenDoc = Jsoup.connect(realDocUrl).get();
+                            articleSegments = fengwenDoc.select(segTagNames[2]).select("p");
+                            Log.d(TAG, "parseDetail: realUrl = " + realDocUrl);
+                            break;
+                        }
+                    }
                 }
                 final LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,LinearLayout.LayoutParams.WRAP_CONTENT);
                 for (Element ele : articleSegments){
@@ -107,8 +123,11 @@ public class NewsDetail extends AppCompatActivity {
                             String imageUrl = pic.attr("abs:src");
                             //pictureUrls.add(imageUrl);
                             ImageView newsImage = new ImageView(NewsDetail.this);
+                            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                            newsImage.setScaleType(ImageView.ScaleType.CENTER_CROP);
                             newsImage.setImageResource(R.drawable.ic_guancha);
-                            runOnUiThread(() -> detailNoPic.addView(newsImage,layoutParams));
+                            newsImage.setLayoutParams(params);
+                            runOnUiThread(() -> detailNoPic.addView(newsImage));
                             new Thread(() -> {
                                 try {
                                     Drawable newsDetailPic = Drawable.createFromStream(new URL(imageUrl).openStream(),"xinwentupian.jpg");
@@ -125,7 +144,7 @@ public class NewsDetail extends AppCompatActivity {
                         runOnUiThread(() -> detailNoPic.addView(newsText,layoutParams));
                     }
                 }
-                detailText.setVisibility(View.GONE);
+                runOnUiThread(() -> detailText.setVisibility(View.GONE));
             }
         } catch (IOException e) {
             e.printStackTrace();

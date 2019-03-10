@@ -11,6 +11,7 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:orientation="vertical"
+            android:animateLayoutChanges="true"
             android:id="@+id/detail_no_pic_frame"
             android:layout_height="wrap_content">
             <TextView

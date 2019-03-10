@@ -118,4 +118,9 @@
     <string name="praise_num">38</string>
 
     <string name="title_activity_test">TestActivity</string>
+    <string name="guanche_reader">观网读者</string>
+    <string name="personal_signature">我也不知道这一条要写什么内容</string>
+    <string name="mail_address">www.123456789.com</string>
+    <string name="all_content">所有评论</string>
+    <string name="seen_history">浏览历史</string>
 </resources>

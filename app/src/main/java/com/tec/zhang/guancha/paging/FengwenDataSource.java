@@ -38,7 +38,7 @@ public class FengwenDataSource extends PositionalDataSource<ParseHTML.GuanChaSou
 
     private void fetchNews(){
         ParseHTML parseHTML = new ParseHTML();
-        parseHTML.parseFengwen("http://user.guancha.cn/?s=dhfengwen");
+        parseHTML.parseFengwen("https://user.guancha.cn/?s=dhfengwen");
         dataSource.addAll(parseHTML.getFengwenList());
     }
 

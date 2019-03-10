@@ -123,11 +123,28 @@ public class DetailWithPic extends AppCompatActivity {
                         }
                     }
                 }
-                Elements articleSegments = document.select(".all-txt").select("p");
-                if (articleSegments.size() == 0){
-                    //Log.d(TAG, "parseDetail: 新闻格式不是all text");
-                    articleSegments = document.select(".article-txt").select("p");
+                String[] segTagNames = {".all-txt",".article-txt",".article-txt-content"};
+                Elements articleSegments = new Elements();
+                for (String tagName : segTagNames){
+                    articleSegments = document.select(tagName).select("p");
+                    if (articleSegments.size() !=0) break;
                 }
+                if (articleSegments.size() == 0 ){
+                    Elements fenWenSeg = document.select("script");
+                    String realDocUrl;
+                    for (Element element : fenWenSeg) {
+                        String script = element.toString();
+                        if (script.contains("href")){
+                            realDocUrl = element.toString().substring(script.indexOf("href") + 6,script.lastIndexOf("\"")) ;
+                            Document fengwenDoc = Jsoup.connect(realDocUrl).get();
+                            articleSegments = fengwenDoc.select(segTagNames[2]).select("p");
+                            Log.d(TAG, "parseDetail: realUrl = " + realDocUrl);
+                            break;
+                        }
+                    }
+
+                }
+                Log.d(TAG, "parseDetail: 文章的里面的段落数量为：" + articleSegments.size());
                 //List<String> pictureUrls = new ArrayList<>(10);
                 //int imageNumber = 0;
                 final LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,LinearLayout.LayoutParams.WRAP_CONTENT);
@@ -165,8 +182,7 @@ public class DetailWithPic extends AppCompatActivity {
                         runOnUiThread(() -> detailFrame.addView(newsText,layoutParams));
                     }
                 }
-                detailText.setVisibility(View.GONE);
-
+                runOnUiThread(() -> detailText.setVisibility(View.GONE));
                 /*final SpannableString spannableString = new SpannableString(article);
                 if (pictureUrls.size() != 0){
                     int index = 0;

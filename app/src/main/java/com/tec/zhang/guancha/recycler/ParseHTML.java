@@ -272,6 +272,7 @@ public class ParseHTML {
         try {
             Document fengwenDoc = Jsoup.connect(moduleName).get();
             Elements fengwenNews = fengwenDoc.select(".active").select(".orderby-last-publish").select("li");
+            Log.d(TAG, "parseFengwen: 风闻页面的新闻数量为：" + fengwenNews.size());
             for(Element ele : fengwenNews) {
                 if(ele.select(".list-item").size() == 0) {
                     continue;

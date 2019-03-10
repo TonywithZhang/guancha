@@ -14,11 +14,11 @@
                         <option name="values">
                           <map>
                             <entry key="assetSourceType" value="FILE" />
-                            <entry key="height" value="365" />
-                            <entry key="outputName" value="ic_guancha" />
+                            <entry key="height" value="200" />
+                            <entry key="outputName" value="ic_wite_content" />
                             <entry key="overrideSize" value="true" />
-                            <entry key="sourceFile" value="D:\k\Pictures\guancha.svg" />
-                            <entry key="width" value="365" />
+                            <entry key="sourceFile" value="F:\KDR\wite_content.svg" />
+                            <entry key="width" value="200" />
                           </map>
                         </option>
                       </PersistentState>

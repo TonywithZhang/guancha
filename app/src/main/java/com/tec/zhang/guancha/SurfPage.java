@@ -3,6 +3,7 @@ package com.tec.zhang.guancha;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -57,7 +58,6 @@ public class SurfPage extends BaseActivity {
 
     //private ParseHTML guanchaWeb;
     private static boolean parseFinishFlage = false;
-
     private MainPage mainPage;
     private FengWenPage fengWenPage;
     private InternationalPage internationalPage;
@@ -68,11 +68,12 @@ public class SurfPage extends BaseActivity {
     private AutoPage autoPage;
     //private LeadingAheadPage leadingAheadPage;
     private VideoPage videoPage;
+    private DrawerLayout drawer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_surf_page);
+        setContentView(R.layout.news_main_page);
         //rececle = findViewById(R.id.recycler);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -137,7 +138,7 @@ public class SurfPage extends BaseActivity {
         FragmentIndicator fragmentAdapter = new FragmentIndicator(getSupportFragmentManager(), fragments, fragmentNames);
         pager.setAdapter(fragmentAdapter);
         tabLayout.setupWithViewPager(pager);
-        new Thread(displayItems).start();
+        //new Thread(displayItems).start();
     }
     Runnable displayItems = new Runnable() {
         @Override
