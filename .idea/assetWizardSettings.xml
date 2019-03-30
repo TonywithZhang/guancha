@@ -3,6 +3,11 @@
   <component name="WizardSettings">
     <option name="children">
       <map>
+        <entry key="imageWizard">
+          <value>
+            <PersistentState />
+          </value>
+        </entry>
         <entry key="vectorWizard">
           <value>
             <PersistentState>
@@ -14,11 +19,12 @@
                         <option name="values">
                           <map>
                             <entry key="assetSourceType" value="FILE" />
+                            <entry key="color" value="888888" />
                             <entry key="height" value="200" />
-                            <entry key="outputName" value="ic_wite_content" />
+                            <entry key="outputName" value="ic_jubao" />
                             <entry key="overrideSize" value="true" />
-                            <entry key="sourceFile" value="F:\KDR\wite_content.svg" />
-                            <entry key="width" value="200" />
+                            <entry key="sourceFile" value="C:\Users\zhang\Pictures\svgs\jubao.svg" />
+                            <entry key="width" value="220" />
                           </map>
                         </option>
                       </PersistentState>

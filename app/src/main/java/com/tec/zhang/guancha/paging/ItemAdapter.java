@@ -58,24 +58,21 @@ public class ItemAdapter extends PagedListAdapter<ParseHTML.GuanChaSouceData,Ite
         holder.newsTitle.setText(single.getTitle());
         holder.reads.setText(String.valueOf(single.getCommentNum()));
         holder.beLong.setText(single.getBelongTo());
-        holder.card.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View v) {
-                if (single.getImageUrl().equals("")){
-                    Intent intent = new Intent(activity,NewsDetail.class);
-                    intent.putExtra("articleUrl",single.getArticleUrl());
-                    intent.putExtra("news",single);
-                    activity.startActivity(intent);
-                }else {
-                    Intent intent = new Intent(activity,DetailWithPic.class);
-                    intent.putExtra("articleUrl",single.getArticleUrl());
-                    intent.setExtrasClassLoader(ParseHTML.class.getClassLoader());
-                    intent.putExtra("news",single);
-                    drawableToBitmap(holder.newsPic.getDrawable());
-                    intent.putExtra("pic",bitmap2Bytes(bitmap));
-                    ActivityOptionsCompat optionsCompat = ActivityOptionsCompat.makeSceneTransitionAnimation(activity,holder.newsPic,"animation_image");
-                    ActivityCompat.startActivity(activity,intent,optionsCompat.toBundle());
-                }
+        holder.card.setOnClickListener(v -> {
+            if (single.getImageUrl().equals("")){
+                Intent intent = new Intent(activity,NewsDetail.class);
+                intent.putExtra("articleUrl",single.getArticleUrl());
+                intent.putExtra("news",single);
+                activity.startActivity(intent);
+            }else {
+                Intent intent = new Intent(activity,DetailWithPic.class);
+                intent.putExtra("articleUrl",single.getArticleUrl());
+                intent.setExtrasClassLoader(ParseHTML.class.getClassLoader());
+                intent.putExtra("news",single);
+                drawableToBitmap(holder.newsPic.getDrawable());
+                intent.putExtra("pic",bitmap2Bytes(bitmap));
+                ActivityOptionsCompat optionsCompat = ActivityOptionsCompat.makeSceneTransitionAnimation(activity,holder.newsPic,"animation_image");
+                ActivityCompat.startActivity(activity,intent,optionsCompat.toBundle());
             }
         });
     }

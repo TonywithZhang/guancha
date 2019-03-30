@@ -11,11 +11,18 @@ import android.os.Bundle;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
+import com.tec.zhang.guancha.Activities.CommentAdapter;
 import com.tec.zhang.guancha.recycler.ParseHTML;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
+import androidx.recyclerview.widget.RecyclerView;
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 
 import android.os.Environment;
 import android.text.SpannableString;
@@ -29,7 +36,10 @@ import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -43,11 +53,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 public class DetailWithPic extends AppCompatActivity {
     private ImageView newsPic;
     private TextView detailText;
     private LinearLayout detailFrame;
+    private RecyclerView commentList;
+    private CommentAdapter adapter;
     ParseHTML.GuanChaSouceData newsType;
     private static final String TAG = "新闻页面里 ";
     @Override
@@ -59,6 +72,7 @@ public class DetailWithPic extends AppCompatActivity {
         newsPic = findViewById(R.id.detail_image);
         detailText = findViewById(R.id.detail_text_pic);
         detailFrame = findViewById(R.id.detail_frame);
+        commentList = findViewById(R.id.comment_list);
         Intent intent = getIntent();
         byte[] pic = intent.getByteArrayExtra("pic");
         newsPic.setImageBitmap(BitmapFactory.decodeByteArray(pic,0,pic.length));
@@ -80,13 +94,13 @@ public class DetailWithPic extends AppCompatActivity {
         ss.setSpan(fcs,0,ss.length(),Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
         setTitle(ss);
         //setTitleColor(0x000000);
-
         new Thread(new Runnable() {
             @Override
             public void run() {
                 parseDetail(articleUrl,newsType.getNewsType());
             }
         }).start();
+        loadComments(articleUrl,"");
     }
 
     private void parseDetail(String articleUrl, ParseHTML.NEWS_TYPE type){
@@ -152,7 +166,14 @@ public class DetailWithPic extends AppCompatActivity {
                     if (!ele.text().endsWith("截图")){
                         if (!ele.text().equals("")){
                             TextView newsText = new TextView(DetailWithPic.this);
-                            newsText.setText(ele.text());
+                            newsText.setTextColor(Color.rgb(0,0,0));
+                            newsText.setTextSize(20f);
+                            String segmentContent = "        " +ele.text();
+                            if (ele.text().startsWith("　")) {
+                                newsText.setText(ele.text());
+                            } else {
+                                newsText.setText(segmentContent);
+                            }
                             runOnUiThread(() -> detailFrame.addView(newsText,layoutParams));
                         }
                         //article.append(ele.text()).append("\n");
@@ -178,7 +199,14 @@ public class DetailWithPic extends AppCompatActivity {
                         }
                     }else{
                         TextView newsText = new TextView(DetailWithPic.this);
-                        newsText.setText(ele.text());
+                        newsText.setTextSize(20f);
+                        newsText.setTextColor(Color.rgb(0,0,0));
+                        String segmentContent = "    " +ele.text();
+                        if (ele.text().startsWith("　")) {
+                            newsText.setText(ele.text());
+                        } else {
+                            newsText.setText(segmentContent);
+                        }
                         runOnUiThread(() -> detailFrame.addView(newsText,layoutParams));
                     }
                 }
@@ -211,9 +239,35 @@ public class DetailWithPic extends AppCompatActivity {
                         detailText.setText(spannableString);
                     }
                 });*/
+
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private void loadComments(String articleUrl,String codeId){
+        OkHttpClient client = new OkHttpClient();
+        Request request = new Request.Builder().url("https://app.guancha.cn/comment/get-hot-comment").addHeader("Referer",articleUrl).get().build();
+        Call call = client.newCall(request);
+        call.enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                Toast.makeText(DetailWithPic.this,"请求网络过程中发生错误！",Toast.LENGTH_LONG).show();
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException{
+                try{
+                    String respond = response.body().string();
+                    JSONObject jo = new JSONObject(respond);
+
+                }catch (NullPointerException e){
+                    e.printStackTrace();
+                }catch (JSONException e){
+                    e.printStackTrace();
+                }
+            }
+        });
     }
 }

@@ -22,6 +22,7 @@ import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
+import com.google.android.material.navigation.NavigationView;
 import com.google.android.material.tabs.TabLayout;
 import com.tec.zhang.guancha.pages.AutoPage;
 import com.tec.zhang.guancha.pages.FengWenPage;
@@ -69,12 +70,15 @@ public class SurfPage extends BaseActivity {
     //private LeadingAheadPage leadingAheadPage;
     private VideoPage videoPage;
     private DrawerLayout drawer;
-
+    private NavigationView navigation;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.news_main_page);
         //rececle = findViewById(R.id.recycler);
+        drawer = findViewById(R.id.drawer);
+        navigation = drawer.findViewById(R.id.navigation);
+        navigation.setItemIconTintList(null);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         ViewPager pager = findViewById(R.id.view_pager);
