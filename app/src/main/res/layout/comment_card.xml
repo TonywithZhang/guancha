@@ -159,8 +159,8 @@
         android:text="@string/comment"
         android:layout_below="@+id/comment_parent_card"
         android:layout_margin="5dp"
-        android:layout_alignLeft="@+id/comment_parent_card"
-        android:layout_alignStart="@+id/comment_parent_card"
+        android:layout_toRightOf="@+id/user_image"
+        android:layout_toEndOf="@+id/user_image"
         />
     <ImageView
         android:layout_width="17dp"

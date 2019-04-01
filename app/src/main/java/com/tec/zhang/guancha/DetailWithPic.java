@@ -12,11 +12,13 @@ import android.os.Bundle;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 import com.tec.zhang.guancha.Activities.CommentAdapter;
+import com.tec.zhang.guancha.recycler.CommentBean;
 import com.tec.zhang.guancha.recycler.ParseHTML;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.app.ActivityCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -38,6 +40,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.jsoup.Jsoup;
@@ -62,6 +65,9 @@ public class DetailWithPic extends AppCompatActivity {
     private RecyclerView commentList;
     private CommentAdapter adapter;
     ParseHTML.GuanChaSouceData newsType;
+
+    private final int HEADER_VIEW = 1;
+    private final int COMMENT_VIEW = 2;
     private static final String TAG = "新闻页面里 ";
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -100,14 +106,12 @@ public class DetailWithPic extends AppCompatActivity {
                 parseDetail(articleUrl,newsType.getNewsType());
             }
         }).start();
-        loadComments(articleUrl,"");
     }
 
     private void parseDetail(String articleUrl, ParseHTML.NEWS_TYPE type){
         try {
             StringBuilder article = new StringBuilder();
             Map<String, String> header = new HashMap<>();
-
             header.put("User-Agent", "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36");
             header.put("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
             header.put("Accept-Language", "zh-cn,zh;q=0.5");
@@ -123,6 +127,18 @@ public class DetailWithPic extends AppCompatActivity {
             RandomAccessFile raf = new RandomAccessFile(log,"rw");
             raf.write(document.toString().getBytes());
             raf.close();*/
+            //提取codeId
+                String codeId = "";
+                String codeScript;
+                Elements scripts = document.select("head").get(0).select("script");
+                for (Element ele : scripts){
+                    if (ele.toString().contains("ID")){
+                        codeScript = ele.toString();
+                        int codeIndex = codeScript.indexOf("ID");
+                        codeId = codeScript.substring(codeIndex + 4,codeIndex + 10);
+                        Log.d(TAG, "parseDetail: codeID为：" + codeId);
+                    }
+                }
                 Elements eles = document.select(".last");
                 String fullUrl = null;
                 StringBuilder builder = new StringBuilder();
@@ -186,6 +202,8 @@ public class DetailWithPic extends AppCompatActivity {
                             //pictureUrls.add(imageUrl);
                             ImageView newsImage = new ImageView(DetailWithPic.this);
                             newsImage.setImageResource(R.drawable.ic_guancha);
+                            newsImage.setScaleType(ImageView.ScaleType.FIT_XY);
+                            newsImage.setAdjustViewBounds(true);
                             runOnUiThread(() -> detailFrame.addView(newsImage,layoutParams));
                             new Thread(() -> {
                                 try {
@@ -239,16 +257,28 @@ public class DetailWithPic extends AppCompatActivity {
                         detailText.setText(spannableString);
                     }
                 });*/
-
+                if (!codeId.equals("")){
+                    loadComments(articleUrl,codeId);
+                }
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
+
     }
 
     private void loadComments(String articleUrl,String codeId){
+        List<CommentBean> commentListComtent = new ArrayList<>(50);
         OkHttpClient client = new OkHttpClient();
-        Request request = new Request.Builder().url("https://app.guancha.cn/comment/get-hot-comment").addHeader("Referer",articleUrl).get().build();
+        String requestUrl = "https://user.guancha.cn/comment/cmt-list.json?codeId=" + codeId + "&codeType=1&pageNo=1&order=1&ff=www";
+        Request request = new Request.Builder()
+                .url(requestUrl)
+                .addHeader("Referer",articleUrl)
+                .addHeader("Accept","application/json, text/javascript, */*; q=0.01")
+                .addHeader("Origin","https://www.guancha.cn")
+                .addHeader("Accept-Language","zh-CN,zh;q=0.9")
+                .get()
+                .build();
         Call call = client.newCall(request);
         call.enqueue(new Callback() {
             @Override
@@ -261,7 +291,58 @@ public class DetailWithPic extends AppCompatActivity {
                 try{
                     String respond = response.body().string();
                     JSONObject jo = new JSONObject(respond);
-
+                    String hotComment = jo.getString("all_hot_count");
+                    Log.d(TAG, "onResponse: 有" + hotComment + "条热评");
+                    if (Integer.parseInt(hotComment) != 0){
+                        CommentBean headerText = new CommentBean(HEADER_VIEW,"","","","",false,"",false,"",false);
+                        headerText.setHeaderTitle("热门评论 " + hotComment + " 条");
+                        commentListComtent.add(headerText);
+                        JSONArray hotComments = jo.getJSONArray("hots");
+                        for (int i = 0; i < hotComments.length(); i ++){
+                            JSONObject hotCommentBean = hotComments.getJSONObject(i);
+                            CommentBean singleBean = new CommentBean(COMMENT_VIEW,hotCommentBean.getString("user_photo"),hotCommentBean.getString("user_nick"),hotCommentBean.getString("created_at"),hotCommentBean.getString("content"),hotCommentBean.getBoolean("has_praise"),hotCommentBean.getInt("praise_num") + "",hotCommentBean.getBoolean("has_tread"),hotCommentBean.getString("tread_num"), hotCommentBean.getInt("parent_id") != 0);
+                            if (singleBean.isParentExists()){
+                                JSONObject parentComment = hotCommentBean.getJSONArray("parent").getJSONObject(0);
+                                singleBean.setParentUserName(parentComment.getString("user_nick"));
+                                singleBean.setParentCommentTime(parentComment.getString("created_at"));
+                                singleBean.setParentComment(parentComment.getString("content"));
+                                singleBean.setParentDisliked(parentComment.getBoolean("has_tread"));
+                                singleBean.setParentDislikedNumber(parentComment.getString("tread_num"));
+                                singleBean.setParentUserPraised(parentComment.getBoolean("has_praise"));
+                                singleBean.setParentPraisedNumber(parentComment.getInt("praise_num") + "");
+                            }
+                            commentListComtent.add(singleBean);
+                        }
+                    }
+                    if (Integer.parseInt(jo.getString("count")) != 0){
+                        CommentBean headerText = new CommentBean(HEADER_VIEW,"","","","",false,"",false,"",false);
+                        headerText.setHeaderTitle("所有评论 " + jo.getString("count") + " 条");
+                        commentListComtent.add(headerText);
+                        JSONArray normalComments = jo.getJSONArray("items");
+                        for (int i = 0; i < normalComments.length(); i ++){
+                            JSONObject normalComment = normalComments.getJSONObject(i);
+                            Log.d(TAG, "onResponse: " + normalComment.getString("user_nick"));
+                            CommentBean singleBean = new CommentBean(COMMENT_VIEW,normalComment.getString("user_photo"),normalComment.getString("user_nick"),normalComment.getString("created_at"),normalComment.getString("content"),normalComment.getBoolean("has_praise"),normalComment.getInt("praise_num") + "",normalComment.getBoolean("has_tread"),normalComment.getString("tread_num"), normalComment.getInt("parent_id") != 0);
+                            if (singleBean.isParentExists()){
+                                JSONObject parentComment = normalComment.getJSONArray("parent").getJSONObject(0);
+                                singleBean.setParentUserName(parentComment.getString("user_nick"));
+                                singleBean.setParentCommentTime(parentComment.getString("created_at"));
+                                singleBean.setParentComment(parentComment.getString("content"));
+                                singleBean.setParentDisliked(parentComment.getBoolean("has_tread"));
+                                singleBean.setParentDislikedNumber(parentComment.getString("tread_num"));
+                                singleBean.setParentUserPraised(parentComment.getBoolean("has_praise"));
+                                singleBean.setParentPraisedNumber(parentComment.getInt("praise_num") + "");
+                            }
+                            commentListComtent.add(singleBean);
+                        }
+                    }
+                    runOnUiThread(() -> {
+                        commentList = findViewById(R.id.comment_list);
+                        adapter = new CommentAdapter(commentListComtent);
+                        commentList.setLayoutManager(new LinearLayoutManager(DetailWithPic.this));
+                        commentList.setAdapter(adapter);
+                        Log.d(TAG, "onResponse: 评论列条的数量为：" + commentListComtent.size());
+                    });
                 }catch (NullPointerException e){
                     e.printStackTrace();
                 }catch (JSONException e){

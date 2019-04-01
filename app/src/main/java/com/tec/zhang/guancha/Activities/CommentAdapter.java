@@ -1,5 +1,6 @@
 package com.tec.zhang.guancha.Activities;
 
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,6 +17,8 @@ import java.util.List;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import de.hdodenhof.circleimageview.CircleImageView;
+
+import static androidx.constraintlayout.widget.Constraints.TAG;
 
 public class CommentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
     private final int HEADER_VIEW = 1;
@@ -54,6 +57,7 @@ public class CommentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
             commentViewHolder.commentTime.setText(comment.getCommentTime());
             Picasso.get().load(comment.getUserHeaderImageUrl()).placeholder(R.drawable.ic_guancha).fit().into(commentViewHolder.userHeader);
             commentViewHolder.userName.setText(comment.getUserName());
+            Log.d(TAG, "onBindViewHolder: " + comment.getUserName());
             if (comment.isUserPraised()) commentViewHolder.praisedIcon.setImageResource(R.drawable.ic_zan_ed);
             commentViewHolder.praisedNum.setText(comment.getPraisedNumber());
             if (comment.isDisliked()) commentViewHolder.dislikeIcon.setImageResource(R.drawable.ic_cai_red_ed);
@@ -78,7 +82,7 @@ public class CommentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
 
     @Override
     public int getItemCount() {
-        return 0;
+        return commentList.size();
     }
 
     @Override

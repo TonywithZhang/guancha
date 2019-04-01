@@ -32,7 +32,4 @@
             android:id="@+id/comment_list"
             />
     </LinearLayout>
-
-
-
 </androidx.core.widget.NestedScrollView>

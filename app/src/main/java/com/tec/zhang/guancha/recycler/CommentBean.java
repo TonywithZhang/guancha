@@ -21,7 +21,7 @@ public class CommentBean {
     private boolean disliked;
     private String dislikedNumber;
 
-    public CommentBean(String imageUrl,String userName,String commentTime,String comment,boolean userPraised,String praisedNumber,boolean disliked,String dislikedNumber,boolean parentExists){
+    public CommentBean(int viewType,String imageUrl,String userName,String commentTime,String comment,boolean userPraised,String praisedNumber,boolean disliked,String dislikedNumber,boolean parentExists){
         this.userHeaderImageUrl = imageUrl;
         this.userName = userName;
         this.commentTime = commentTime;
@@ -31,6 +31,7 @@ public class CommentBean {
         this.disliked = disliked;
         this.dislikedNumber = dislikedNumber;
         this.parentExists = parentExists;
+        this.viewType = viewType;
     }
     public String getHeaderTitle() {
         return headerTitle;
