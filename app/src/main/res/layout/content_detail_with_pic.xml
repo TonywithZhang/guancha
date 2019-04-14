@@ -31,5 +31,8 @@
             android:layout_height="wrap_content"
             android:id="@+id/comment_list"
             />
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="60dp"/>
     </LinearLayout>
 </androidx.core.widget.NestedScrollView>

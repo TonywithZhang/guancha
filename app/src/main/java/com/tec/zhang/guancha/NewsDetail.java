@@ -1,10 +1,12 @@
 package com.tec.zhang.guancha;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.ViewCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import okhttp3.Call;
 import okhttp3.Callback;
+import okhttp3.FormBody;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -12,19 +14,25 @@ import okhttp3.Response;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.text.Editable;
 import android.text.SpannableString;
 import android.text.Spanned;
+import android.text.TextWatcher;
 import android.text.style.ImageSpan;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.LinearInterpolator;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.tec.zhang.guancha.Activities.CommentAdapter;
+import com.tec.zhang.guancha.database.SessionProperty;
+import com.tec.zhang.guancha.database.UserProperty;
 import com.tec.zhang.guancha.recycler.CommentBean;
 import com.tec.zhang.guancha.recycler.ParseHTML;
 
@@ -35,6 +43,7 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.litepal.LitePal;
 
 import java.io.IOException;
 import java.net.URL;
@@ -51,6 +60,14 @@ public class NewsDetail extends AppCompatActivity {
 
     private RecyclerView commentList;
     private CommentAdapter adapter;
+    //声明codeId
+    String codeId;
+    //声明csrf变量，代表session状态
+    String csrfState = "";
+    //声明一个OKhttpClient
+    OkHttpClient client;
+    //声明令牌token，以便于复用
+    String token;
 
     private final int HEADER_VIEW = 1;
     private final int COMMENT_VIEW = 2;
@@ -71,6 +88,7 @@ public class NewsDetail extends AppCompatActivity {
                 parseDetail(articleUrl,newsType.getNewsType());
             }
         }).start();
+        addCommentButtonListener();
     }
     private void parseDetail(String articleUrl, ParseHTML.NEWS_TYPE type){
         try {
@@ -92,7 +110,7 @@ public class NewsDetail extends AppCompatActivity {
             raf.write(document.toString().getBytes());
             raf.close();*/
                 //提取codeId
-                String codeId = "";
+                codeId = "";
                 String codeScript;
                 Elements scripts = document.select("head").get(0).select("script");
                 for (Element ele : scripts){
@@ -222,18 +240,76 @@ public class NewsDetail extends AppCompatActivity {
                     }
                 });*/
                 if (!codeId.equals("")){
-                    loadComments(articleUrl,codeId);
+                    loadComments(articleUrl);
                 }
             }
+            //下面进行一次带用户登录状态的请求，为的是得到csrf状态字符串
+            client = new OkHttpClient();
+            //先拿到用户数据
+            List<UserProperty> properties = LitePal.findAll(UserProperty.class);
+            if (properties.size() == 0) {
+                return;
+            }
+            //拿到本地的csrf数据
+            List<SessionProperty> session = LitePal.findAll(SessionProperty.class);
+            if (session.size() != 0) csrfState = session.get(0).getCsrfState();
+            //下面拿到用户的token令牌，目测token与设备相关
+            UserProperty userProperty = properties.get(0);
+            token = userProperty.getUserToken();
+            //将网络请求的链接按照观网格式串联起来
+            String comtentRequest = "https://app.guancha.cn/news/content?id=" + codeId + "&type=&access-token=" + token;
+            Request contentGetRequest;
+            //如果有之前的csrf数据，就加入请求头，如果没有就不加
+            if (csrfState.equals("")) {
+                contentGetRequest = new Request.Builder()
+                        .url(comtentRequest)
+                        .get()
+                        .build();
+            }else {
+                contentGetRequest = new Request.Builder()
+                        .url(comtentRequest)
+                        .addHeader("Cookie",csrfState)
+                        .get()
+                        .build();
+            }
+            //下面正式进行网络请求
+            Call call = client.newCall(contentGetRequest);
+            call.enqueue(new Callback() {
+                @Override
+                public void onFailure(Call call, IOException e) {
+                    //失败暂时不做处理
+                }
+
+                @Override
+                public void onResponse(Call call, Response response) throws IOException {
+                    //拿到文章的返回头
+                    try{
+                        String responseHeader = response.header("Set-Cookie","");
+                        Log.d(TAG, "onResponse: 返回的csrf数据为" + responseHeader);
+                        //存储或者升级csrf数据
+                        SessionProperty singleSession = new SessionProperty();
+                        singleSession.setCsrfState(responseHeader);
+                        if (csrfState.equals("")){
+                            csrfState = responseHeader;
+                            singleSession.save();
+                        }else {
+                            csrfState = responseHeader;
+                            singleSession.updateAll();
+                        }
+                    } catch(Exception e){
+                        e.printStackTrace();
+                    }
+                }
+            });
         } catch (IOException e) {
             e.printStackTrace();
         }
 
     }
 
-    private void loadComments(String articleUrl,String codeId){
+    private void loadComments(String articleUrl){
         List<CommentBean> commentListComtent = new ArrayList<>(50);
-        OkHttpClient client = new OkHttpClient();
+        client = new OkHttpClient();
         String requestUrl = "https://user.guancha.cn/comment/cmt-list.json?codeId=" + codeId + "&codeType=1&pageNo=1&order=1&ff=www";
         Request request = new Request.Builder()
                 .url(requestUrl)
@@ -313,6 +389,102 @@ public class NewsDetail extends AppCompatActivity {
                     e.printStackTrace();
                 }
             }
+        });
+    }
+
+    private void addCommentButtonListener(){
+        //拿到评论框的实例
+        EditText commentText = findViewById(R.id.input_comment);
+        //拿到发送按钮的实例
+        ImageView sendComment = findViewById(R.id.send_comment);
+        //设置评论框的输入事件监听器
+        commentText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                //如果此时输入后的评论不为空，则显示发送按钮
+                if (!commentText.getText().toString().equals("")) sendComment.setVisibility(View.VISIBLE);
+                else {
+                    //为空的话，如果发送按钮没有隐藏，则隐藏发送按钮
+                    if (sendComment.getVisibility() == View.VISIBLE) sendComment.setVisibility(View.GONE);
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+
+            }
+        });
+        //为发送按钮设置事件监听器
+        sendComment.setOnClickListener(v -> {
+            //首先检测用户是否登录
+            List<UserProperty> properties = LitePal.findAll(UserProperty.class);
+            if (properties.size() == 0) {
+                Toast.makeText(NewsDetail.this,"您尚未登录，请登录后再评论！",Toast.LENGTH_LONG).show();
+                return;
+            }
+            //点击后将按钮设置为不可点击，否则将重复发送
+            sendComment.setClickable(false);
+            //此处启动一个动画，旋转图片
+            ViewCompat.animate(sendComment)
+                    .rotation(720)
+                    .setDuration(5000)
+                    .withLayer()
+                    .setInterpolator(new LinearInterpolator())
+                    .start();
+            //然后进行一个网络请求，提交评论
+            String commentUrl = "https://app.guancha.cn/comment/create?access-token=" + token;
+            //构造一个FormBody，填入需要提交的表单
+            FormBody form = new FormBody.Builder()
+                    .add("access_device","3")
+                    .add("parant_id","0")
+                    .add("code_id",codeId)
+                    .add("type","1")
+                    .add("content",commentText.getText().toString())
+                    .add("from","cms")
+                    .build();
+            //构造网络请求
+            Request commentRequest = new Request.Builder()
+                    .url(commentUrl)
+                    .header("Cookie",csrfState)
+                    .post(form)
+                    .build();
+            Call call = client.newCall(commentRequest);
+            call.enqueue(new Callback() {
+                @Override
+                public void onFailure(Call call, IOException e) {
+                    //暂时不处理错误
+                }
+
+                @Override
+                public void onResponse(Call call, Response response) throws IOException {
+                    try{
+                        //拿到返回的json字符串
+                        JSONObject respond = new JSONObject(response.body().string());
+                        Log.d(TAG, "onResponse: " + respond.toString());
+                        //进行判断，如果评论成功，则发送一个吐司
+                        if (respond.getString("msg").equals("成功")){
+                            runOnUiThread(() -> {
+                                Toast.makeText(NewsDetail.this,"评论成功！",Toast.LENGTH_LONG).show();
+                                commentText.clearAnimation();
+                                commentText.setText("");
+                            });
+
+                        }
+                        //然后存储csrf数据
+                        csrfState = response.header("Set-Cookie","");
+                        SessionProperty singleSession = new SessionProperty();
+                        singleSession.setCsrfState(csrfState);
+                        if (!csrfState.equals("")) singleSession.updateAll();
+                    }catch(Exception e){
+                        e.printStackTrace();
+                    }
+                }
+            });
         });
     }
 }
