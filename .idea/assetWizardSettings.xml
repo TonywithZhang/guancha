@@ -21,10 +21,10 @@
                             <entry key="assetSourceType" value="FILE" />
                             <entry key="color" value="888888" />
                             <entry key="height" value="200" />
-                            <entry key="outputName" value="ic_jubao" />
+                            <entry key="outputName" value="ic_login" />
                             <entry key="overrideSize" value="true" />
-                            <entry key="sourceFile" value="C:\Users\zhang\Pictures\svgs\jubao.svg" />
-                            <entry key="width" value="220" />
+                            <entry key="sourceFile" value="C:\Users\zhang\Pictures\svgs\login.svg" />
+                            <entry key="width" value="200" />
                           </map>
                         </option>
                       </PersistentState>

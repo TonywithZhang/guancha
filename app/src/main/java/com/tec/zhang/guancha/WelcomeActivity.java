@@ -17,6 +17,8 @@ import android.widget.Toast;
 
 import com.airbnb.lottie.LottieAnimationView;
 
+import org.litepal.LitePal;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -107,8 +109,8 @@ public class WelcomeActivity extends BaseActivity {
         ActionBar action = getSupportActionBar();
         if (action != null){
             action.hide();
-            Log.d(TAG, "onCreate: 程序已启动");
         }
+        LitePal.getDatabase();
         /*w1 = (LottieAnimationView) findViewById(R.id.w1);
         w2 = (LottieAnimationView) findViewById(R.id.w2);
         w3 = (LottieAnimationView) findViewById(R.id.w3);

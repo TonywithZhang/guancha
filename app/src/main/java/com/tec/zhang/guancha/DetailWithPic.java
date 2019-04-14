@@ -136,7 +136,6 @@ public class DetailWithPic extends AppCompatActivity {
                         codeScript = ele.toString();
                         int codeIndex = codeScript.indexOf("ID");
                         codeId = codeScript.substring(codeIndex + 4,codeIndex + 10);
-                        Log.d(TAG, "parseDetail: codeID为：" + codeId);
                     }
                 }
                 Elements eles = document.select(".last");
@@ -169,10 +168,10 @@ public class DetailWithPic extends AppCompatActivity {
                             Document fengwenDoc = Jsoup.connect(realDocUrl).get();
                             articleSegments = fengwenDoc.select(segTagNames[2]).select("p");
                             Log.d(TAG, "parseDetail: realUrl = " + realDocUrl);
+                            if (realDocUrl.contains("id=")) codeId = articleUrl.substring(articleUrl.indexOf("id=") + 3);
                             break;
                         }
                     }
-
                 }
                 Log.d(TAG, "parseDetail: 文章的里面的段落数量为：" + articleSegments.size());
                 //List<String> pictureUrls = new ArrayList<>(10);

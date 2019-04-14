@@ -56,7 +56,7 @@ public class ItemAdapter extends PagedListAdapter<ParseHTML.GuanChaSouceData,Ite
             holder.newsPic.setImageResource(R.drawable.ic_guancha);
         }
         holder.newsTitle.setText(single.getTitle());
-        holder.reads.setText(String.valueOf(single.getCommentNum()));
+        holder.reads.setText(String.valueOf(single.getReadsNum()));
         holder.beLong.setText(single.getBelongTo());
         holder.card.setOnClickListener(v -> {
             if (single.getImageUrl().equals("")){

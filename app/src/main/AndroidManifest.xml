@@ -12,6 +12,8 @@
         android:label="@string/guancha"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
+        android:usesCleartextTraffic="true"
+        android:name="org.litepal.LitePalApplication"
         android:theme="@style/Theme.AppCompat.Light.NoActionBar">
 
         <activity
