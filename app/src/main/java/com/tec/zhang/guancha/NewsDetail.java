@@ -11,6 +11,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 
+import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
@@ -24,6 +25,7 @@ import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.LinearInterpolator;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -68,6 +70,10 @@ public class NewsDetail extends AppCompatActivity {
     OkHttpClient client;
     //声明令牌token，以便于复用
     String token;
+    //Comment_id
+    int currentcommentId;
+    //评论框
+    private EditText commentText;
 
     private final int HEADER_VIEW = 1;
     private final int COMMENT_VIEW = 2;
@@ -88,7 +94,7 @@ public class NewsDetail extends AppCompatActivity {
                 parseDetail(articleUrl,newsType.getNewsType());
             }
         }).start();
-        addCommentButtonListener();
+        addCommentButtonListener(currentcommentId);
     }
     private void parseDetail(String articleUrl, ParseHTML.NEWS_TYPE type){
         try {
@@ -329,20 +335,22 @@ public class NewsDetail extends AppCompatActivity {
             @Override
             public void onResponse(Call call, Response response) throws IOException{
                 try{
+                    assert response.body().string() != null;
                     String respond = response.body().string();
                     JSONObject jo = new JSONObject(respond);
                     String hotComment = jo.getString("all_hot_count");
                     Log.d(TAG, "onResponse: 有" + hotComment + "条热评");
                     if (Integer.parseInt(hotComment) != 0){
-                        CommentBean headerText = new CommentBean(HEADER_VIEW,"","","","",false,"",false,"",false);
+                        CommentBean headerText = new CommentBean(HEADER_VIEW,0,"","","","",false,"",false,"",false);
                         headerText.setHeaderTitle("热门评论 " + hotComment + " 条");
                         commentListComtent.add(headerText);
                         JSONArray hotComments = jo.getJSONArray("hots");
                         for (int i = 0; i < hotComments.length(); i ++){
                             JSONObject hotCommentBean = hotComments.getJSONObject(i);
-                            CommentBean singleBean = new CommentBean(COMMENT_VIEW,hotCommentBean.getString("user_photo"),hotCommentBean.getString("user_nick"),hotCommentBean.getString("created_at"),hotCommentBean.getString("content"),hotCommentBean.getBoolean("has_praise"),hotCommentBean.getInt("praise_num") + "",hotCommentBean.getBoolean("has_tread"),hotCommentBean.getString("tread_num"), hotCommentBean.getInt("parent_id") != 0);
+                            CommentBean singleBean = new CommentBean(COMMENT_VIEW,hotCommentBean.getInt("id"),hotCommentBean.getString("user_photo"),hotCommentBean.getString("user_nick"),hotCommentBean.getString("created_at"),hotCommentBean.getString("content"),hotCommentBean.getBoolean("has_praise"),hotCommentBean.getInt("praise_num") + "",hotCommentBean.getBoolean("has_tread"),hotCommentBean.getString("tread_num"), hotCommentBean.getInt("parent_id") != 0);
                             if (singleBean.isParentExists()){
                                 JSONObject parentComment = hotCommentBean.getJSONArray("parent").getJSONObject(0);
+                                singleBean.setParentId(hotCommentBean.getInt("parent_id"));
                                 singleBean.setParentUserName(parentComment.getString("user_nick"));
                                 singleBean.setParentCommentTime(parentComment.getString("created_at"));
                                 singleBean.setParentComment(parentComment.getString("content"));
@@ -351,20 +359,22 @@ public class NewsDetail extends AppCompatActivity {
                                 singleBean.setParentUserPraised(parentComment.getBoolean("has_praise"));
                                 singleBean.setParentPraisedNumber(parentComment.getInt("praise_num") + "");
                             }
+                            Log.d(TAG, "onResponse: 该条评论的id为：" + singleBean.getCommentId()+ "父评论的id为：" + singleBean.getParentId());
                             commentListComtent.add(singleBean);
                         }
                     }
                     if (Integer.parseInt(jo.getString("count")) != 0){
-                        CommentBean headerText = new CommentBean(HEADER_VIEW,"","","","",false,"",false,"",false);
+                        CommentBean headerText = new CommentBean(HEADER_VIEW,0,"","","","",false,"",false,"",false);
                         headerText.setHeaderTitle("所有评论 " + jo.getString("count") + " 条");
                         commentListComtent.add(headerText);
                         JSONArray normalComments = jo.getJSONArray("items");
                         for (int i = 0; i < normalComments.length(); i ++){
                             JSONObject normalComment = normalComments.getJSONObject(i);
                             Log.d(TAG, "onResponse: " + normalComment.getString("user_nick"));
-                            CommentBean singleBean = new CommentBean(COMMENT_VIEW,normalComment.getString("user_photo"),normalComment.getString("user_nick"),normalComment.getString("created_at"),normalComment.getString("content"),normalComment.getBoolean("has_praise"),normalComment.getInt("praise_num") + "",normalComment.getBoolean("has_tread"),normalComment.getString("tread_num"), normalComment.getInt("parent_id") != 0);
+                            CommentBean singleBean = new CommentBean(COMMENT_VIEW,normalComment.getInt("id"),normalComment.getString("user_photo"),normalComment.getString("user_nick"),normalComment.getString("created_at"),normalComment.getString("content"),normalComment.getBoolean("has_praise"),normalComment.getInt("praise_num") + "",normalComment.getBoolean("has_tread"),normalComment.getString("tread_num"), normalComment.getInt("parent_id") != 0);
                             if (singleBean.isParentExists()){
                                 JSONObject parentComment = normalComment.getJSONArray("parent").getJSONObject(0);
+                                singleBean.setParentId(normalComment.getInt("parent_id"));
                                 singleBean.setParentUserName(parentComment.getString("user_nick"));
                                 singleBean.setParentCommentTime(parentComment.getString("created_at"));
                                 singleBean.setParentComment(parentComment.getString("content"));
@@ -373,12 +383,26 @@ public class NewsDetail extends AppCompatActivity {
                                 singleBean.setParentUserPraised(parentComment.getBoolean("has_praise"));
                                 singleBean.setParentPraisedNumber(parentComment.getInt("praise_num") + "");
                             }
+                            Log.d(TAG, "onResponse: 该条评论的id为：" + singleBean.getCommentId()+ "父评论的id为：" + singleBean.getParentId());
                             commentListComtent.add(singleBean);
                         }
                     }
                     runOnUiThread(() -> {
                         commentList = findViewById(R.id.no_pic_recycler);
-                        adapter = new CommentAdapter(commentListComtent);
+                        //添加一个Adapter的监听器，用于回复别人的评论
+                        CommentAdapter.OnCommentClickListener clickListener = id -> {
+                            //将当前的commentId设置为传入的id
+                            currentcommentId = id;
+                            //使输入框获得焦点
+                            commentText.requestFocus();
+                            //设置提示的文字
+                            commentText.setHint("回复他的评论");
+                            //弹出输入法
+                            ((InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE)).showSoftInput(commentText,1);
+                        };
+                        //初始化一个评论列表的适配器
+                        adapter = new CommentAdapter(commentListComtent,NewsDetail.this);
+                        adapter.setOnCommentClickListener(clickListener);
                         commentList.setLayoutManager(new LinearLayoutManager(NewsDetail.this));
                         commentList.setAdapter(adapter);
                         Log.d(TAG, "onResponse: 评论列条的数量为：" + commentListComtent.size());
@@ -392,9 +416,9 @@ public class NewsDetail extends AppCompatActivity {
         });
     }
 
-    private void addCommentButtonListener(){
+    private void addCommentButtonListener(int commentId){
         //拿到评论框的实例
-        EditText commentText = findViewById(R.id.input_comment);
+        commentText = findViewById(R.id.input_comment);
         //拿到发送按钮的实例
         ImageView sendComment = findViewById(R.id.send_comment);
         //设置评论框的输入事件监听器
@@ -441,7 +465,7 @@ public class NewsDetail extends AppCompatActivity {
             //构造一个FormBody，填入需要提交的表单
             FormBody form = new FormBody.Builder()
                     .add("access_device","3")
-                    .add("parant_id","0")
+                    .add("parant_id",String.valueOf(commentId))
                     .add("code_id",codeId)
                     .add("type","1")
                     .add("content",commentText.getText().toString())
@@ -472,6 +496,7 @@ public class NewsDetail extends AppCompatActivity {
                                 Toast.makeText(NewsDetail.this,"评论成功！",Toast.LENGTH_LONG).show();
                                 commentText.clearAnimation();
                                 commentText.setText("");
+                                sendComment.setClickable(true);
                             });
 
                         }

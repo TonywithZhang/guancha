@@ -3,12 +3,14 @@ package com.tec.zhang.guancha.recycler;
 public class CommentBean {
     private String headerTitle;
     private int viewType;
+    private int commentId;
 
     private String userHeaderImageUrl;
     private String userName;
     private String commentTime;
     private boolean parentExists;
     private String parentUserName;
+    private int parentId;
     private String parentCommentTime;
     private String parentComment;
     private boolean ParentUserPraised;
@@ -21,8 +23,9 @@ public class CommentBean {
     private boolean disliked;
     private String dislikedNumber;
 
-    public CommentBean(int viewType,String imageUrl,String userName,String commentTime,String comment,boolean userPraised,String praisedNumber,boolean disliked,String dislikedNumber,boolean parentExists){
+    public CommentBean(int viewType,int commentId,String imageUrl,String userName,String commentTime,String comment,boolean userPraised,String praisedNumber,boolean disliked,String dislikedNumber,boolean parentExists){
         this.userHeaderImageUrl = imageUrl;
+        this.commentId = commentId;
         this.userName = userName;
         this.commentTime = commentTime;
         this.comment = comment;
@@ -175,5 +178,21 @@ public class CommentBean {
     }
     public int getViewType(){
         return viewType;
+    }
+
+    public int getCommentId() {
+        return commentId;
+    }
+
+    public void setCommentId(int commentId) {
+        this.commentId = commentId;
+    }
+
+    public int getParentId() {
+        return parentId;
+    }
+
+    public void setParentId(int parentId) {
+        this.parentId = parentId;
     }
 }
