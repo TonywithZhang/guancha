@@ -12,9 +12,14 @@ import okhttp3.Request;
 import okhttp3.Response;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.os.Environment;
 import android.text.Editable;
 import android.text.SpannableString;
 import android.text.Spanned;
@@ -22,8 +27,11 @@ import android.text.TextWatcher;
 import android.text.style.ImageSpan;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.view.animation.LinearInterpolator;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
@@ -32,11 +40,13 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.tec.zhang.guancha.Activities.ArticleBase;
 import com.tec.zhang.guancha.Activities.CommentAdapter;
 import com.tec.zhang.guancha.database.SessionProperty;
 import com.tec.zhang.guancha.database.UserProperty;
 import com.tec.zhang.guancha.recycler.CommentBean;
 import com.tec.zhang.guancha.recycler.ParseHTML;
+import com.uuzuche.lib_zxing.activity.CodeUtils;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -47,14 +57,19 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.litepal.LitePal;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class NewsDetail extends AppCompatActivity {
+import static androidx.constraintlayout.widget.Constraints.TAG;
+
+public class NewsDetail extends ArticleBase {
     private static final String TAG = "第三页";
     TextView detailText;
     private LinearLayout detailNoPic;
@@ -87,6 +102,10 @@ public class NewsDetail extends AppCompatActivity {
         detailText = findViewById(R.id.news_detail_text);
         newsType = getIntent().getParcelableExtra("news");
         Log.d(TAG, "onCreate: " + newsType.getTitle());
+        //初始化要分享图片的标题
+        shareTitle = newsType.getTitle();
+        //初始化要分享图片
+        shareRawBitmap = CodeUtils.createImage(articleUrl,110,110,BitmapFactory.decodeResource(getResources(),R.drawable.guanwang));
         setTitle(newsType.getTitle());
         new Thread(new Runnable() {
             @Override
@@ -98,7 +117,6 @@ public class NewsDetail extends AppCompatActivity {
     }
     private void parseDetail(String articleUrl, ParseHTML.NEWS_TYPE type){
         try {
-            StringBuilder article = new StringBuilder();
             Map<String, String> header = new HashMap<>();
             header.put("User-Agent", "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36");
             header.put("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
@@ -162,7 +180,6 @@ public class NewsDetail extends AppCompatActivity {
                     }
 
                 }
-                Log.d(TAG, "parseDetail: 文章的里面的段落数量为：" + articleSegments.size());
                 //List<String> pictureUrls = new ArrayList<>(10);
                 //int imageNumber = 0;
                 final LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,LinearLayout.LayoutParams.WRAP_CONTENT);
@@ -177,6 +194,10 @@ public class NewsDetail extends AppCompatActivity {
                                 newsText.setText(ele.text());
                             } else {
                                 newsText.setText(segmentContent);
+                            }
+                            //将图片要显示的内容文章初始化
+                            if (articleContent.length() < 125 && (! ele.text().startsWith("【"))){
+                                articleContent = String.format("%s%s", articleContent, ele.text().trim());
                             }
                             runOnUiThread(() -> detailNoPic.addView(newsText,layoutParams));
                         }
@@ -511,5 +532,17 @@ public class NewsDetail extends AppCompatActivity {
                 }
             });
         });
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        //判断是否是我们增加的分享按钮，其实此时ToolBar上面只有这一个按钮，所以这里的判断是多余的
+        //但是不确定以后是否增加其他的按钮，所以先保留判断
+        if (item.getItemId() == R.id.share_pic) {
+            if (shareRawBitmap != null) {
+                shareArticle(shareRawBitmap, shareTitle, articleContent);
+            } else Log.d(TAG, "onOptionsItemSelected: 要分享的图片为空，请排查原因");
+        }
+        return super.onOptionsItemSelected(item);
     }
 }

@@ -11,11 +11,13 @@ import android.os.Bundle;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
+import com.tec.zhang.guancha.Activities.ArticleBase;
 import com.tec.zhang.guancha.Activities.CommentAdapter;
 import com.tec.zhang.guancha.database.SessionProperty;
 import com.tec.zhang.guancha.database.UserProperty;
 import com.tec.zhang.guancha.recycler.CommentBean;
 import com.tec.zhang.guancha.recycler.ParseHTML;
+import com.uuzuche.lib_zxing.activity.CodeUtils;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
@@ -39,6 +41,7 @@ import android.text.style.ForegroundColorSpan;
 import android.text.style.ImageSpan;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
 import android.view.animation.LinearInterpolator;
@@ -70,7 +73,7 @@ import java.util.Optional;
 
 import static androidx.constraintlayout.widget.Constraints.TAG;
 
-public class DetailWithPic extends AppCompatActivity {
+public class DetailWithPic extends ArticleBase {
     //声明页面顶部的图片
     private ImageView newsPic;
     //声明文章的正式内容
@@ -138,7 +141,10 @@ public class DetailWithPic extends AppCompatActivity {
         Log.d(TAG, "onCreate: 文章地址为：" + articleUrl);
         //拿到文章类型，即军事，汽车，产经，财经等等分类
         newsType = getIntent().getParcelableExtra("news");
-
+        //初始化要分享图片的标题
+        shareTitle = newsType.getTitle();
+        //初始化要分享图片
+        shareRawBitmap = CodeUtils.createImage(articleUrl,110,110,BitmapFactory.decodeResource(getResources(),R.drawable.guanwang));
         //下面的内容为使用spannablestring将标题格式化，设置为黑色等等
         SpannableString ss = new SpannableString(newsType.getTitle());
         ForegroundColorSpan fcs = new ForegroundColorSpan(Color.BLACK);
@@ -158,7 +164,6 @@ public class DetailWithPic extends AppCompatActivity {
 
     private void parseDetail(String articleUrl, ParseHTML.NEWS_TYPE type){
         try {
-            StringBuilder article = new StringBuilder();
             Map<String, String> header = new HashMap<>();
             header.put("User-Agent", "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/55.0.2883.87 Safari/537.36");
             header.put("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
@@ -221,7 +226,6 @@ public class DetailWithPic extends AppCompatActivity {
                         }
                     }
                 }
-                Log.d(TAG, "parseDetail: 文章的里面的段落数量为：" + articleSegments.size());
                 //List<String> pictureUrls = new ArrayList<>(10);
                 //int imageNumber = 0;
                 final LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,LinearLayout.LayoutParams.WRAP_CONTENT);
@@ -236,6 +240,10 @@ public class DetailWithPic extends AppCompatActivity {
                                 newsText.setText(ele.text());
                             } else {
                                 newsText.setText(segmentContent);
+                            }
+                            //将图片要显示的内容文章初始化
+                            if (articleContent.length() < 125 && (! ele.text().startsWith("【"))){
+                                articleContent = String.format("%s%s", articleContent, ele.text().trim());
                             }
                             runOnUiThread(() -> detailFrame.addView(newsText,layoutParams));
                         }
@@ -377,6 +385,7 @@ public class DetailWithPic extends AppCompatActivity {
     private void loadComments(String articleUrl){
         List<CommentBean> commentListComtent = new ArrayList<>(50);
         OkHttpClient client = new OkHttpClient();
+        Log.d(TAG, "loadComments: 这篇文章的codeid是：" + codeId);
         String requestUrl = "https://user.guancha.cn/comment/cmt-list.json?codeId=" + codeId + "&codeType=1&pageNo=1&order=1&ff=www";
         Request request = new Request.Builder()
                 .url(requestUrl)
@@ -574,4 +583,17 @@ public class DetailWithPic extends AppCompatActivity {
             });
         });
     }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        //判断是否是我们增加的分享按钮，其实此时ToolBar上面只有这一个按钮，所以这里的判断是多余的
+        //但是不确定以后是否增加其他的按钮，所以先保留判断
+        if (item.getItemId() == R.id.share_pic){
+            if (shareRawBitmap != null){
+                shareArticle(shareRawBitmap,shareTitle,articleContent);
+            }else Log.d(TAG, "onOptionsItemSelected: 要分享的图片为空，请排查原因");
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
 }

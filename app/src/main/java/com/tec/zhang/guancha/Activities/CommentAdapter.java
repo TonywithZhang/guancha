@@ -2,10 +2,26 @@ package com.tec.zhang.guancha.Activities;
 
 import android.app.Activity;
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.graphics.Typeface;
+import android.graphics.drawable.Drawable;
+import android.os.Build;
+import android.os.Environment;
+import android.text.Html;
+import android.text.SpannableString;
+import android.text.SpannableStringBuilder;
+import android.text.Spanned;
+import android.text.style.ImageSpan;
+import android.text.style.StyleSpan;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -17,8 +33,15 @@ import com.tec.zhang.guancha.database.SessionProperty;
 import com.tec.zhang.guancha.database.UserProperty;
 import com.tec.zhang.guancha.recycler.CommentBean;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -43,7 +66,7 @@ public class CommentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     private List<CommentBean> commentList;
     private Activity context;
     private String csrfState,token;
-    OkHttpClient client = new OkHttpClient();
+    private OkHttpClient client = new OkHttpClient();
 
     public CommentAdapter(List<CommentBean> commentList,Activity context){
         this.commentList = commentList;
@@ -73,7 +96,7 @@ public class CommentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
             headerViewHolder.hotHeader.setText(comment.getHeaderTitle());
         }else if (comment.getViewType() == COMMENT_VIEW){
             CommentViewHolder commentViewHolder = (CommentViewHolder) holder;
-            commentViewHolder.comment.setText(comment.getComment());
+            commentViewHolder.comment.setText(formatComment(comment.getComment()));
             commentViewHolder.comment.setOnClickListener(v -> commentOthers(commentViewHolder.comment,comment.getCommentId()));//执行传入的监听器中的评论方法
             commentViewHolder.commentTime.setText(comment.getCommentTime());
             Picasso.get().load(comment.getUserHeaderImageUrl()).placeholder(R.drawable.ic_guancha).fit().into(commentViewHolder.userHeader);
@@ -93,7 +116,7 @@ public class CommentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
             }
             commentViewHolder.parentUserName.setText(comment.getParentUserName());
             commentViewHolder.parentCommentTime.setText(comment.getParentCommentTime());
-            commentViewHolder.parentComment.setText(comment.getParentComment());
+            commentViewHolder.parentComment.setText(formatComment(comment.getParentComment()));
             commentViewHolder.parentComment.setOnClickListener(v -> commentOthers(commentViewHolder.parentComment,comment.getParentId()));
             if (comment.isParentUserPraised())commentViewHolder.parentPraiseIcon.setImageResource(R.drawable.ic_zan_ed);
             commentViewHolder.parentPraiseIcon.setOnClickListener(v -> praise(commentViewHolder.parentPraiseIcon,comment.getParentId()));
@@ -310,7 +333,7 @@ public class CommentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
             clickListener.onCommentClick(commentId);
         }
     }
-
+    //初始化网络请求的参数
     private void initSessionProperty(){
         List<UserProperty> properties = LitePal.findAll(UserProperty.class);
         if (properties.size() == 0) {
@@ -337,5 +360,49 @@ public class CommentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     //初始化上面的clickListener
     public void setOnCommentClickListener(OnCommentClickListener listener){
         this.clickListener = listener;
+    }
+
+
+    private Drawable htmlDrawable;
+    /*
+      将所要显示的评论进行格式化
+      第一个要格式化的<br  / > ,替换成\n
+      第二个是<strong></strong> ,将此标签内的内容替换为粗体字
+      第三个要格式化的是官网的表情系统，包含在评论中的<img src = ""/>之类的
+      */
+    private Spanned formatComment(String comment){
+        /*//首先把所有的<br  / >替换为换行符，这一部最简单
+        comment = comment.replace("<br  / >","\n");
+        //创建一个空的SpannableStringBuilder，用于生成我们需要的格式化字符串
+        SpannableString commentFormatter = new SpannableString(comment);
+        //创建一个正则表达式对象，表示对<strong> 标签的匹配
+        Pattern strongPattern = Pattern.compile("^(<strong>)(.+)$(</strong>)");
+        //得到匹配的对象
+        Matcher strongMatcher = strongPattern.matcher(comment);
+        //创建一个flag，表征字符串中是否有需要格式化的内容
+        boolean hasFormatable = false;
+        //在循环中，将所有的strong标签内的文字加粗
+        while (strongMatcher.find()){
+            //将此时匹配到的strong标签中的文字改成粗体字
+            commentFormatter.setSpan(new StyleSpan(Typeface.BOLD),strongMatcher.start() + 8,strongMatcher.end() - 9, Spanned.SPAN_INCLUSIVE_EXCLUSIVE);
+        }
+        //再创建表情的正则表达式
+        Pattern facialExpression = Pattern.compile("^(<img src).+$(/>)");
+        Matcher facialMatcher = facialExpression.matcher(commentFormatter);
+        //在循环中，创建表情富文本
+        while (facialMatcher.find()){
+            //首先将匹配到的
+        }
+        //上面的步骤仅仅是把所有该加粗的字加粗，还要把其中的标签去掉
+        */
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+            return Html.fromHtml(comment,Html.FROM_HTML_MODE_COMPACT,source -> {
+                ImageView htmlView = new ImageView(context);
+                Picasso.get().load(source).placeholder(R.drawable.guanwang).into(htmlView);
+                htmlDrawable = htmlView.getDrawable();
+                if (htmlDrawable == null) Log.d(TAG, "formatComment: 图片为空");
+                return htmlDrawable;
+            },null);
+        }else return Html.fromHtml(comment);
     }
 }
