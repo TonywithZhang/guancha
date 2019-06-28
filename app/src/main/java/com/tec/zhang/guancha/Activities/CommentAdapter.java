@@ -60,108 +60,171 @@ import okhttp3.Response;
 import static androidx.constraintlayout.widget.Constraints.TAG;
 
 public class CommentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
-    private final int HEADER_VIEW = 1;
-    private final int COMMENT_VIEW = 2;
+    //下面两个都是flag，在评论和头部信息之间进行切换
+    private final int HEADER_VIEW = 1;//评论框头部的内容，包括热门评论，和所有评论
+    private final int COMMENT_VIEW = 2;//评论本体
 
-    private List<CommentBean> commentList;
-    private Activity context;
-    private String csrfState,token;
-    private OkHttpClient client = new OkHttpClient();
+    private List<CommentBean> commentList;//评论的列表
+    private Activity context;//评论的上下文环境，就是这个适配器所要应用到的Activity
+    private String csrfState,token;//防网络攻击字符串，应用于网络请求中
+    private OkHttpClient client = new OkHttpClient();//网络请求的客户端对象
 
+    /*
+    * 构造方法，将上下文环境和评论列表以构造器参数形式传入
+    * */
     public CommentAdapter(List<CommentBean> commentList,Activity context){
         this.commentList = commentList;
         this.context = context;
     }
+
+    /*
+    * 映射具体评论界面的过程，产生两种view ，根据实际情况进行切换
+    * */
     @NonNull
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view;
+        View view;//新建一个view
+        //从数据里判断要返回view的类型
         if (viewType == HEADER_VIEW) {
+            //如果要头部的视图类型，则调用映射器，将头部视图布局蛇叔出来
             view = LayoutInflater.from(parent.getContext()).inflate(R.layout.comment_header,parent,false);
+            //创建新的头部视图并且返回
             return new HeaderViewHolder(view);
         }
         else if (viewType == COMMENT_VIEW) {
+            //如果要求返回的评论本体，则映射评论视图的布局
             view = LayoutInflater.from(parent.getContext()).inflate(R.layout.comment_card,parent,false);
+            //创建评论视图，并且返回
             return new CommentViewHolder(view);
         }
+        //因为不会存在其他的视图，所以走到else分支的肯定是数据出现错误，这里就直接抛出异常
         else throw new IllegalArgumentException("viewType参数错误！");
     }
 
+    /*
+    * 在此方法内，将视图和后面的模型进行绑定
+    * */
     @Override
     public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
-        CommentBean comment = commentList.get(position);
-
+        CommentBean comment = commentList.get(position);//从列表中拿出当前位置的数据
+        //进行显示内容的判断
         if (comment.getViewType() == HEADER_VIEW){
+            //如果要返回头部内容，则强转为头部类型
             HeaderViewHolder headerViewHolder = (HeaderViewHolder) holder;
+            //设置头部的信息
             headerViewHolder.hotHeader.setText(comment.getHeaderTitle());
         }else if (comment.getViewType() == COMMENT_VIEW){
+            //如果是评论的类型，则就强转为评论
             CommentViewHolder commentViewHolder = (CommentViewHolder) holder;
+            //设置评论的文本内容
             commentViewHolder.comment.setText(formatComment(comment.getComment()));
+            //设置评论的点击事件监听
             commentViewHolder.comment.setOnClickListener(v -> commentOthers(commentViewHolder.comment,comment.getCommentId()));//执行传入的监听器中的评论方法
+            //显示评论时间
             commentViewHolder.commentTime.setText(comment.getCommentTime());
+            //加载用户的头像
             Picasso.get().load(comment.getUserHeaderImageUrl()).placeholder(R.drawable.ic_guancha).fit().into(commentViewHolder.userHeader);
+            //显示用户名
             commentViewHolder.userName.setText(comment.getUserName());
-            Log.d(TAG, "onBindViewHolder: " + comment.getUserName());
+            //判断，如果用户点击了这个评论的点赞按钮，则将按钮设置为已经点赞的样式
             if (comment.isUserPraised()) commentViewHolder.praisedIcon.setImageResource(R.drawable.ic_zan_ed);
+            //设置点赞按钮的点击事件监听
             commentViewHolder.praisedIcon.setOnClickListener(v -> praise(commentViewHolder.praisedIcon,comment.getCommentId()));//执行传入的监听器中的点赞方法
+            //显示此条评论的点赞数量
             commentViewHolder.praisedNum.setText(comment.getPraisedNumber());
+            //进行判断，如果当前用户点击了这条评论的反对，则将这一条评论的反对设置为已经反对的样式
             if (comment.isDisliked()) commentViewHolder.dislikeIcon.setImageResource(R.drawable.ic_cai_red_ed);
+            //显示当前评论反对的数量
             commentViewHolder.dislikedNum.setText(comment.getDislikedNumber());
+            //设置当前反对按钮的点击事件监听
             commentViewHolder.dislikeIcon.setOnClickListener(v -> trample(commentViewHolder.dislikeIcon,comment.getCommentId()));//执行传入的监听器中的反对方法
+            //设置分享按钮的事件监听，当前为空实现
             commentViewHolder.share.setOnClickListener(v -> {});//分享的事件监听器
+            //设置举报按钮的事件监听，当前为空
             commentViewHolder.jubao.setOnClickListener(v -> {});//举报的事件监听器
+            //判断，看此评论是否是回复别人评论的评论
             if (!comment.isParentExists()) {
+                //如果不是，则直接隐藏上一级评论的界面并且返回，跳出此方法
                 commentViewHolder.parentView.setVisibility(View.GONE);
                 return;
             }
+            //下面都是当上一级评论存在的情况下，要做的事情
+            //显示上一级评论的用户名
             commentViewHolder.parentUserName.setText(comment.getParentUserName());
+            //显示上一级评论的评论时间
             commentViewHolder.parentCommentTime.setText(comment.getParentCommentTime());
+            //显示上一级评论的评论内容
             commentViewHolder.parentComment.setText(formatComment(comment.getParentComment()));
+            //设置上一级评论内容的事件监听，主要是弹出输入法，用于恢复该评论
             commentViewHolder.parentComment.setOnClickListener(v -> commentOthers(commentViewHolder.parentComment,comment.getParentId()));
+            //判断当前用户是否点击了上一级评论的点赞按钮并根据结果进行处理
             if (comment.isParentUserPraised())commentViewHolder.parentPraiseIcon.setImageResource(R.drawable.ic_zan_ed);
+            //设置上一级评论的点赞按钮的点击事件监听
             commentViewHolder.parentPraiseIcon.setOnClickListener(v -> praise(commentViewHolder.parentPraiseIcon,comment.getParentId()));
+            //显示点赞的数量
             commentViewHolder.parentPraisedNum.setText(comment.getParentPraisedNumber());
+            //判断当前用户是否点击了上一级评论的反对按钮，并进行相应的处理
             if (comment.isParentDisliked()) commentViewHolder.parentDislikedIcon.setImageResource(R.drawable.ic_cai_red_ed);
+            //设置上一级评论的反对按钮的点击事件监听
             commentViewHolder.parentDislikedIcon.setOnClickListener(v -> trample(commentViewHolder.parentDislikedIcon,comment.getParentId()));
+            //显示上一级评论的反对数量
             commentViewHolder.parentDislikedNum.setText(comment.getParentDislikedNumber());
+            //设置上一级评论的分享和举报的点击事件监听，当前都为空
             commentViewHolder.parentShare.setOnClickListener(v -> {});//父评论的事件监听器
             commentViewHolder.parentJubao.setOnClickListener(v -> {});//父举报的事件监听器
-        }else throw new IllegalArgumentException("参数错误!");
+        }else throw new IllegalArgumentException("参数错误!");//如果到了当前的分支，直接排除异常，提示解析错误
     }
 
+    /*
+    * 此方法必须重写，直接返回评论列表的长度即可
+    * */
     @Override
     public int getItemCount() {
         return commentList.size();
     }
 
+    /**
+    * 此方法用户判断要显示的评论界面类型，包括头部信息的类型，和评论本体
+    * @param position 当前评论在评论列表的位置
+     *
+     * @return 返回的是返回布局的flag
+    * */
     @Override
     public int getItemViewType(int position) {
         return commentList.get(position).getViewType();
     }
 
+    /*
+    * 评论本体的模型，用于和布局相结合，显示评论本体
+    * */
     class CommentViewHolder extends RecyclerView.ViewHolder{
-        CircleImageView userHeader;
-        TextView userName;
-        TextView commentTime;
-        RelativeLayout parentView;
-        TextView parentUserName;
-        TextView parentCommentTime;
-        TextView parentComment;
-        ImageView parentPraiseIcon;
-        TextView parentPraisedNum;
-        TextView parentDislikedNum;
-        ImageView parentDislikedIcon;
-        ImageView parentShare;
-        ImageView parentJubao;
-        TextView comment;
-        ImageView praisedIcon;
-        TextView praisedNum;
-        TextView dislikedNum;
-        ImageView dislikeIcon;
-        ImageView share;
-        ImageView jubao;
+        CircleImageView userHeader;//用户的头像
+        TextView userName;// 用户名
+        TextView commentTime;//评论时间
+        RelativeLayout parentView;//上一级评论的布局容器
+        TextView parentUserName;//上一级评论的用户名
+        TextView parentCommentTime;// 上一级评论的时间
+        TextView parentComment;// 上一级评论内容
+        ImageView parentPraiseIcon;//上一级评论的点赞图标
+        TextView parentPraisedNum;//上一级评论的点赞数量
+        TextView parentDislikedNum;//上一级评论的反对数量
+        ImageView parentDislikedIcon;//上级评论的反对图标
+        ImageView parentShare;//上一级评论的分享图标
+        ImageView parentJubao;//上一级评论的举报图标
+        TextView comment;//评论的内容
+        ImageView praisedIcon;//点赞的图标
+        TextView praisedNum;//点赞的数量
+        TextView dislikedNum;//反对的数量
+        ImageView dislikeIcon;//反对的图标
+        ImageView share;//分享图标
+        ImageView jubao;//举报图标
+        /**
+         * 必须实现的构造函数，利用传进来的布局，将布局和model进行结合
+         * @param view 传入的布局，当前传入的布局为评论的布局
+         * */
         public CommentViewHolder(View view){
             super(view);
+            //下面都是将model和view上面的部分进行一一绑定，具体省略...........
             userHeader = view.findViewById(R.id.user_image);
             userName = view.findViewById(R.id.user_name);
             commentTime = view.findViewById(R.id.comment_time);
@@ -185,14 +248,26 @@ public class CommentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         }
     }
 
+    /*
+    * 这个内部类是头部信息的模型，用于和头部信息进行绑定
+    * */
     class HeaderViewHolder extends RecyclerView.ViewHolder{
-        TextView hotHeader;
+        TextView hotHeader;// 名字是hotheader，其实并不是一直都是热评，还可以显示“全部评论”
+        /**
+         * 必须实现的构造函数，和头部信息进行绑定，显示头部信息
+         * @param view 传进来的头部信息的布局
+         * */
         public HeaderViewHolder(View view){
             super(view);
+            //头部信息其实很简单了，只需要显示一个文本
             hotHeader = view.findViewById(R.id.comment_header_title);
         }
     }
-    //点赞的回调函数
+    /**
+     * 点赞的回调函数
+     * @param praiseIcon 需要响应的点赞图标
+     * @param commentId 评论所在文章的唯一标识码
+     */
     private void praise(ImageView praiseIcon,int commentId){
         //初始化环境，主要是拿到token和csrf字符串
         initSessionProperty();
@@ -261,7 +336,11 @@ public class CommentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
             }
         });
     }
-    //反对的回调函数
+    /**
+     * 反对的回调函数
+     * @param trampleIcon 需要响应的反对图标
+     * @param commentId 评论所在文章的唯一标识码
+     * */
     private void trample(ImageView trampleIcon,int commentId){
         //初始化环境，主要是拿到token和csrf字符串
         initSessionProperty();
@@ -362,7 +441,7 @@ public class CommentAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         this.clickListener = listener;
     }
 
-
+    //创建
     private Drawable htmlDrawable;
     /*
       将所要显示的评论进行格式化
