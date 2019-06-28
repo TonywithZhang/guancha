@@ -23,8 +23,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * An example full-screen activity that shows and hides the system UI (i.e.
- * status bar and navigation/system bar) with user interaction.
+ * 这一个开始页的Activity是直接用的Android studio中的全屏模板
+ * 只修改了少量部分，比如删掉原来的布局，增加一个图标和两个文本
+ * 其实这里面大多数的代码都没什么用，但是我怕出错，就都留着，
+ * 只加了一条3秒后自动跳转到下一个Activity的代码
+ * 所以注释不多写，只要是英文的注释，那都是原本自带的
  */
 public class WelcomeActivity extends BaseActivity {
     private static final String TAG = "观察者网app";
@@ -104,12 +107,14 @@ public class WelcomeActivity extends BaseActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         requestWindowFeature(Window.FEATURE_NO_TITLE);
+        //设置本页面为全屏状态，这一条代码必须写在加载布局之前，也就是setContentView之前，否则将报错
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,WindowManager.LayoutParams.FLAG_FULLSCREEN);
         setContentView(R.layout.activity_welcome);
         ActionBar action = getSupportActionBar();
         if (action != null){
             action.hide();
         }
+        //创建数据库，这是本地存储策略的开始
         LitePal.getDatabase();
         /*w1 = (LottieAnimationView) findViewById(R.id.w1);
         w2 = (LottieAnimationView) findViewById(R.id.w2);
@@ -129,6 +134,7 @@ public class WelcomeActivity extends BaseActivity {
         animalList.add(w2);
         animalList.add(w3);*/
 
+        //创建一个计时器，三秒后跳转到新闻页面
         new CountDownTimer(3500,370){
             @Override
             public void onTick(long millisUntilFinished) {
