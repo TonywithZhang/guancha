@@ -10,7 +10,7 @@ import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-
+//
 public class BaseActivity extends AppCompatActivity {
     public final String FINISH_ZHIS = "com.tec.zhang.FINISH_ZHIS";
     private final String FINISH_ALL = "com.tec.zhang.FINISH_ALL";

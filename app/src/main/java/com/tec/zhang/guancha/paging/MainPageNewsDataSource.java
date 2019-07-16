@@ -32,7 +32,6 @@ public class MainPageNewsDataSource extends PositionalDataSource<ParseHTML.GuanC
     private ArrayList<ParseHTML.GuanChaSouceData> additionDataList(int position,int loadSize){
         ArrayList<ParseHTML.GuanChaSouceData> newsList = new ArrayList<>();
         ParseHTML.GuanChaSouceData data;
-        Log.d(TAG, "additionDataList: 首页中有" + dataSource.size() + "条新闻");
         int dataLength = position + loadSize > dataSource.size() ? dataSource.size() : position + loadSize;
         for (int i = position ; i < position + loadSize ; i ++){
             data = dataSource.get(i);

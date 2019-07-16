@@ -35,6 +35,7 @@
         <mapping class="com.tec.zhang.guancha.database.UserProperty" />
         <mapping class="com.tec.zhang.guancha.database.ScanHistory"/>
         <mapping class="com.tec.zhang.guancha.database.SessionProperty"/>
+        <mapping class="com.tec.zhang.guancha.database.ArticleCodeId"/>
     </list>
 
     <!--

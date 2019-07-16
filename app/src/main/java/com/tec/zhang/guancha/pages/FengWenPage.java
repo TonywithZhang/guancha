@@ -27,15 +27,14 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 public class FengWenPage extends Fragment {
-    private ArrayList<ParseHTML.GuanChaSouceData> newsList = new ArrayList<>();
 /*
     public void setNewsList(ArrayList<ParseHTML.GuanChaSouceData> newsList) {
         this.newsList.clear();
         this.newsList.addAll(newsList);
     }*/
     //Cards cards;
-    ItemAdapter adapter;
-    FengwenViewModel model;
+    private ItemAdapter adapter;
+    private FengwenViewModel model;
     @RequiresApi(api = Build.VERSION_CODES.KITKAT)
     @Nullable
     @Override

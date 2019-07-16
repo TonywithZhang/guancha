@@ -11,9 +11,6 @@ import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.json.XML;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -319,8 +316,6 @@ public class ParseHTML {
             Request request = new Request.Builder().url(requestUrl).build();
             Response response = client.newCall(request).execute();
             String respond = response.body().string().replace("\\r","").replace("\\n","").replace("\\t","").replace("\\","");
-            Log.d(TAG, "nextFengwenPage: 新闻请求的链接为" + requestUrl);
-            Log.d(TAG, "nextFengwenPage: 回复内容的前100个字符为:" + respond.substring(0,100));
             Document doc;
             if (response.body() != null) {
                 doc = Jsoup.parse(respond);
@@ -351,7 +346,6 @@ public class ParseHTML {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        Log.d(TAG, "nextFengwenPage: 加载更多风闻被调用，列表长度为：" + news.size());
         return news;
     }
     /**

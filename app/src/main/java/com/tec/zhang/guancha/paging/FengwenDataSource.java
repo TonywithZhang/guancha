@@ -24,7 +24,6 @@ public class FengwenDataSource extends PositionalDataSource<ParseHTML.GuanChaSou
 
     @Override
     public void loadRange(@NonNull LoadRangeParams params, @NonNull LoadRangeCallback<ParseHTML.GuanChaSouceData> callback) {
-        Log.d(TAG, "loadRange: 风闻加载更多新闻被调用");
         callback.onResult(additionDataList(params.startPosition,params.loadSize));
     }
     private int index = 2;
