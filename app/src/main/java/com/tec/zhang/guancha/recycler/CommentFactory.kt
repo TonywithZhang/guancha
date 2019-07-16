@@ -5,10 +5,10 @@ import androidx.paging.DataSource
 
 class CommentFactory : DataSource.Factory<Int,CommentBean>(){
 
-    private val sourceMutableLiveData = MutableLiveData<CommentDataSource>()
+    private val sourceMutableLiveData = MutableLiveData<CommentsDataSource>()
 
     override fun create(): DataSource<Int, CommentBean> {
-        val dataSource = CommentDataSource()
+        val dataSource = CommentsDataSource()
         sourceMutableLiveData.postValue(dataSource)
         return dataSource
     }

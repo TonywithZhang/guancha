@@ -12,7 +12,7 @@ class CommentViewModel : ViewModel(){
     private val config = PagedList.Config.Builder()
             .setInitialLoadSizeHint(20)
             .setPageSize(20)
-            .setPrefetchDistance(5)
+            .setPrefetchDistance(3)
             .setEnablePlaceholders(false)
             .build()
 

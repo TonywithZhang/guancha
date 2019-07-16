@@ -6,6 +6,7 @@
     android:layout_height="match_parent"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
     tools:context=".DetailWithPic"
+    android:transitionGroup="true"
     tools:showIn="@layout/activity_detail_with_pic">
     <LinearLayout
         android:layout_width="match_parent"
@@ -22,7 +23,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:id="@+id/detail_frame"
-                android:animateLayoutChanges="true"
+                android:animateLayoutChanges="false"
                 android:orientation="vertical"
                 >
                 <TextView

@@ -2,7 +2,6 @@ package com.tec.zhang.guancha.Activities;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -194,9 +193,10 @@ public class ArticleBase extends AppCompatActivity {
         //初始化一个评论列表的适配器
         adapter = new CommentAdapter(ArticleBase.this);
         adapter.setOnCommentClickListener(clickListener);
-        commentList.setLayoutManager(new LinearLayoutManager(ArticleBase.this));
+        commentList.setLayoutManager(new LinearLayoutManager(this));
         commentList.setAdapter(adapter);//链接RecyclerView和适配器
-        ViewModelProvider provider = new ViewModelProvider(getViewModelStore(),new ViewModelProvider.AndroidViewModelFactory(Objects.requireNonNull(getApplication())));
+        ViewModelProvider provider = new ViewModelProvider(getViewModelStore(),
+                new ViewModelProvider.AndroidViewModelFactory(Objects.requireNonNull(getApplication())));
         commentViewModel = provider.get(CommentViewModel.class);
         commentViewModel.getNewsList().observe(this, commentBeans -> adapter.submitList(commentViewModel.getNewsList().getValue()));
     }
